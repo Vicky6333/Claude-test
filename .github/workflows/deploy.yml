@@ -17,7 +17,7 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           python3 << 'PYEOF'
-          import requests, json, os, sys
+          import requests, json, os
 
           api_key = os.environ["RENDER_API_KEY"]
           deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
@@ -47,9 +47,13 @@ jobs:
                   f"https://api.render.com/v1/services/{service_id}/deploys",
                   headers=headers, json={"clearCache": "do_not_clear"}
               )
-              print(r.json())
+              result = r.json()
+              print(json.dumps(result, indent=2))
+              print(f"\n✅ 网址: https://{service_url}")
           else:
               print("Creating new service...")
+              build_cmd = "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/. ../backend/app/static/ && cd ../backend && pip install -r requirements.txt"
+              start_cmd = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
               payload = {
                   "type": "web_service",
                   "name": "retail-collab-platform",
@@ -60,8 +64,10 @@ jobs:
                   "serviceDetails": {
                       "env": "python",
                       "plan": "free",
-                      "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/. ../backend/app/static/ && cd ../backend && pip install -r requirements.txt",
-                      "startCommand": "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+                      "envSpecificDetails": {
+                          "buildCommand": build_cmd,
+                          "startCommand": start_cmd,
+                      },
                       "envVars": [
                           {"key": "DEEPSEEK_API_KEY", "value": deepseek_key},
                           {"key": "SECRET_KEY", "value": "retail-collab-secret-2026"},
@@ -73,9 +79,9 @@ jobs:
               result = r.json()
               print(json.dumps(result, indent=2))
               service_url = result.get("service", {}).get("serviceDetails", {}).get("url", "")
-
-          if service_url:
-              print(f"\n✅ 部署成功！网址: https://{service_url}")
-          else:
-              print("\n⏳ 部署已触发，稍后在 Render 控制台查看网址")
+              if service_url:
+                  print(f"\n✅ 服务已创建，网址: https://{service_url}")
+                  print("⏳ 首次部署约需 5 分钟，请稍候...")
+              else:
+                  print("\n❌ 创建失败，查看上方错误信息")
           PYEOF
