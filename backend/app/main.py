@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from .database import engine, SessionLocal, Base
@@ -78,3 +80,9 @@ def startup():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# 托管前端静态文件（生产环境）
+_static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.exists(_static_dir):
+    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="frontend")
