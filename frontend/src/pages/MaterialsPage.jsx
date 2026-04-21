@@ -60,7 +60,7 @@ function MaterialFormModal({ projectId, projects, onClose, onCreated }) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">物料类型 *</label>
               <select className="input" value={form.type} onChange={set('type')}>
@@ -151,7 +151,7 @@ export default function MaterialsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">物料中心</h1>

@@ -52,7 +52,7 @@ function ProjectFormModal({ onClose, onCreated }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="label">项目名称 *</label>
               <input className="input" placeholder="如：2026冬季花香蓝莓传播" value={form.name} onChange={set('name')} required />
@@ -124,8 +124,8 @@ export default function ProjectsPage() {
   }, [])
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-6">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">项目总览</h1>
           <p className="text-gray-500 text-sm mt-0.5">每个传播活动作为独立项目管理</p>

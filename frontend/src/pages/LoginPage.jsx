@@ -48,7 +48,7 @@ export default function LoginPage() {
           <p className="text-slate-400 mt-2">选择身份直接进入</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {ROLES.map((role) => (
             <button
               key={role.username}

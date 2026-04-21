@@ -79,7 +79,7 @@ export default function ProjectDetailPage() {
   if (!project) return <div className="p-6 text-gray-500">项目不存在</div>
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-5xl mx-auto">
       <button onClick={() => navigate('/projects')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-5">
         <ChevronLeft size={16} />返回项目列表
       </button>
@@ -91,7 +91,7 @@ export default function ProjectDetailPage() {
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
             <p className="text-sky-600 font-medium mt-0.5">{project.product}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link to={`/materials?project_id=${id}`} className="btn-secondary text-xs">物料中心</Link>
             <Link to={`/topics?project_id=${id}`} className="btn-primary text-xs">选题工作台</Link>
           </div>

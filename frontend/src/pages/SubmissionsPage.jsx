@@ -118,7 +118,7 @@ function AcceptancePanel({ submission, onAccepted }) {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">认定曝光量</label>
             <input className="input" type="number" value={form.approved_impressions} onChange={set('approved_impressions')} />
@@ -165,7 +165,7 @@ function SubmissionCard({ submission, isHQ, onAccepted }) {
       </div>
 
       {/* Data grid */}
-      <div className="grid grid-cols-3 gap-3 text-sm mb-4">
+      <div className="grid grid-cols-3 gap-2 text-xs mb-4">
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="text-gray-400 text-xs mb-0.5">曝光量</div>
           <div className="font-semibold">{submission.impressions?.toLocaleString()}</div>
@@ -259,7 +259,7 @@ export default function SubmissionsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">验收复盘</h1>

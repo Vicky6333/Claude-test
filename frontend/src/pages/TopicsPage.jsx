@@ -79,7 +79,7 @@ function TopicFormModal({ projects, onClose, onCreated, defaultProjectId }) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">传播渠道 *</label>
               <select className="input" value={form.channel} onChange={set('channel')}>
@@ -199,7 +199,7 @@ export default function TopicsPage() {
   useEffect(() => { fetchTopics() }, [filterProject, filterStatus])
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">选题工作台</h1>
