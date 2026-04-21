@@ -47,9 +47,13 @@ jobs:
                   f"https://api.render.com/v1/services/{service_id}/deploys",
                   headers=headers, json={"clearCache": "do_not_clear"}
               )
-              result = r.json()
-              print(json.dumps(result, indent=2))
-              print(f"\n✅ 网址: https://{service_url}")
+              print(f"Status: {r.status_code}")
+              if r.text.strip():
+                  print(r.text[:500])
+              if r.status_code in (200, 201):
+                  print(f"\n✅ 重新部署已触发: {service_url}")
+              else:
+                  print(f"\n❌ 触发失败: {r.status_code}")
           else:
               print("Creating new service...")
               build_cmd = "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/. ../backend/app/static/ && cd ../backend && pip install -r requirements.txt"
