@@ -1,12 +1,14 @@
 import json
 import os
 import re
-from typing import Optional
-import anthropic
+from openai import OpenAI
 
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+    base_url="https://api.deepseek.com",
+)
 
-MODEL = "claude-sonnet-4-6"
+MODEL = "deepseek-chat"
 
 CPM_STANDARDS = {
     "小红书": {"cpm_limit": 40, "interaction_min": 1000},
@@ -15,11 +17,24 @@ CPM_STANDARDS = {
     "本地媒体": {"cpm_limit": None, "interaction_min": 1000},
 }
 
-
-def build_system_prompt() -> str:
-    return """你是一位零售商品传播领域的专业顾问，擅长评估区域传播选题的质量和ROI。
+SYSTEM_PROMPT = """你是一位零售商品传播领域的专业顾问，擅长评估区域传播选题的质量和ROI。
 你的任务是基于总部传播主线，对区域提交的选题进行全面评估。
 输出必须是标准JSON格式，不包含任何额外文字或markdown代码块。"""
+
+
+def _call(system: str, user: str, max_tokens: int = 2000) -> str:
+    response = client.chat.completions.create(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    )
+    raw = response.choices[0].message.content.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    return raw
 
 
 def build_evaluation_prompt(project_data: dict, topic_data: dict) -> str:
@@ -34,7 +49,6 @@ def build_evaluation_prompt(project_data: dict, topic_data: dict) -> str:
         + topic_data.get("account_avg_shares", 0)
     )
     estimated_cost = topic_data.get("estimated_cost", 0)
-
     platform_info = topic_data.get("platform_content_info", "")
     platform_section = f"- 平台同类内容情况：{platform_info}" if platform_info else "- 平台同类内容情况：（区域未填写）"
 
@@ -82,25 +96,7 @@ def build_evaluation_prompt(project_data: dict, topic_data: dict) -> str:
 
 def evaluate_topic(project_data: dict, topic_data: dict) -> dict:
     prompt = build_evaluation_prompt(project_data, topic_data)
-
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=2000,
-        system=[
-            {
-                "type": "text",
-                "text": build_system_prompt(),
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    raw_text = response.content[0].text.strip()
-
-    # Strip markdown code blocks if present
-    raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
-    raw_text = re.sub(r"\s*```$", "", raw_text)
+    raw_text = _call(SYSTEM_PROMPT, prompt, max_tokens=2000)
 
     try:
         result = json.loads(raw_text)
@@ -124,7 +120,6 @@ def evaluate_acceptance(submission_data: dict, topic_data: dict, project_data: d
     interactions = submission_data.get("interactions", 0)
     actual_cost = submission_data.get("actual_cost", 0)
     cpm = (actual_cost / impressions * 1000) if impressions > 0 else 0
-
     standard = CPM_STANDARDS.get(channel, {"cpm_limit": 50, "interaction_min": 1000})
 
     prompt = f"""[验收评估任务]
@@ -153,22 +148,7 @@ def evaluate_acceptance(submission_data: dict, topic_data: dict, project_data: d
   "suggestions": ["针对该区域下次传播的具体改进建议1", "建议2"]
 }}"""
 
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=1200,
-        system=[
-            {
-                "type": "text",
-                "text": build_system_prompt(),
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    raw_text = response.content[0].text.strip()
-    raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
-    raw_text = re.sub(r"\s*```$", "", raw_text)
+    raw_text = _call(SYSTEM_PROMPT, prompt, max_tokens=1200)
 
     try:
         return json.loads(raw_text)
