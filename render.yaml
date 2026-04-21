@@ -10,18 +10,10 @@ services:
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: retail-collab-db
-          property: connectionString
+        sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: 1440
-
-databases:
-  - name: retail-collab-db
-    databaseName: retail_collab
-    user: retail_user
-    plan: free
