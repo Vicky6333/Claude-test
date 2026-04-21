@@ -1,0 +1,81 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: ["claude/retail-collaboration-platform-nW7Qt"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create or redeploy Render service
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          python3 << 'PYEOF'
+          import requests, json, os, sys
+
+          api_key = os.environ["RENDER_API_KEY"]
+          deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
+          headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+          # Get owner ID
+          r = requests.get("https://api.render.com/v1/owners?limit=1", headers=headers)
+          r.raise_for_status()
+          owner_id = r.json()[0]["owner"]["id"]
+          print(f"Owner: {owner_id}")
+
+          # Check if service already exists
+          r = requests.get("https://api.render.com/v1/services?limit=20", headers=headers)
+          services = r.json()
+          service_id = None
+          service_url = None
+          for s in services:
+              svc = s.get("service", {})
+              if svc.get("name") == "retail-collab-platform":
+                  service_id = svc["id"]
+                  service_url = svc.get("serviceDetails", {}).get("url")
+                  break
+
+          if service_id:
+              print(f"Service exists ({service_id}), triggering redeploy...")
+              r = requests.post(
+                  f"https://api.render.com/v1/services/{service_id}/deploys",
+                  headers=headers, json={"clearCache": "do_not_clear"}
+              )
+              print(r.json())
+          else:
+              print("Creating new service...")
+              payload = {
+                  "type": "web_service",
+                  "name": "retail-collab-platform",
+                  "ownerId": owner_id,
+                  "repo": "https://github.com/vicky6333/claude-test",
+                  "branch": "claude/retail-collaboration-platform-nW7Qt",
+                  "autoDeploy": "yes",
+                  "serviceDetails": {
+                      "env": "python",
+                      "plan": "free",
+                      "buildCommand": "cd frontend && npm install && npm run build && mkdir -p ../backend/app/static && cp -r dist/. ../backend/app/static/ && cd ../backend && pip install -r requirements.txt",
+                      "startCommand": "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+                      "envVars": [
+                          {"key": "DEEPSEEK_API_KEY", "value": deepseek_key},
+                          {"key": "SECRET_KEY", "value": "retail-collab-secret-2026"},
+                          {"key": "ACCESS_TOKEN_EXPIRE_MINUTES", "value": "1440"},
+                      ],
+                  },
+              }
+              r = requests.post("https://api.render.com/v1/services", headers=headers, json=payload)
+              result = r.json()
+              print(json.dumps(result, indent=2))
+              service_url = result.get("service", {}).get("serviceDetails", {}).get("url", "")
+
+          if service_url:
+              print(f"\n✅ 部署成功！网址: https://{service_url}")
+          else:
+              print("\n⏳ 部署已触发，稍后在 Render 控制台查看网址")
+          PYEOF
