@@ -274,9 +274,9 @@ export default function SubmissionsPage() {
       ) : submissions.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <div className="text-4xl mb-3">📊</div>
-          <div>暂无传播成果</div>
-          <div className="text-sm mt-2">
-            <Link to="/topics" className="text-sky-600 hover:underline">前往选题工作台提交成果</Link>
+          <div>暂无待验收的传播成果</div>
+          <div className="text-sm mt-2 text-gray-400">
+            {user?.role === 'headquarters' ? '等待区域提交执行成果后，在此进行验收评估' : '执行完成后，在选题工作台的选题详情中提交成果'}
           </div>
         </div>
       ) : (
