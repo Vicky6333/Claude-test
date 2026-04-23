@@ -8,6 +8,7 @@ import MaterialsPage from './pages/MaterialsPage'
 import TopicsPage from './pages/TopicsPage'
 import TopicDetailPage from './pages/TopicDetailPage'
 import SubmissionsPage from './pages/SubmissionsPage'
+import RetrospectivePage from './pages/RetrospectivePage'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 function PrivateRoutes() {
@@ -23,6 +24,7 @@ function PrivateRoutes() {
         <Route path="/topics" element={<TopicsPage />} />
         <Route path="/topics/:id" element={<TopicDetailPage />} />
         <Route path="/submissions" element={<SubmissionsPage />} />
+        <Route path="/projects/:id/retrospective" element={<RetrospectivePage />} />
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
     </Layout>

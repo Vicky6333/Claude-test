@@ -93,7 +93,8 @@ export default function ProjectDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link to={`/materials?project_id=${id}`} className="btn-secondary text-xs">物料中心</Link>
-            <Link to={`/topics?project_id=${id}`} className="btn-primary text-xs">选题工作台</Link>
+            <Link to={`/topics?project_id=${id}`} className="btn-secondary text-xs">选题工作台</Link>
+            <Link to={`/projects/${id}/retrospective`} className="btn-primary text-xs">传播复盘</Link>
           </div>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-500">

@@ -124,6 +124,8 @@ class Submission(Base):
     interactions = Column(Integer, default=0)
     actual_cost = Column(Float, default=0)
     comment_self_review = Column(Text)
+    has_organic_coverage = Column(Boolean, default=False)
+    organic_coverage_note = Column(Text)
     cpm = Column(Float)
     cpm_status = Column(String(20), default="pending")  # pass / warn / fail / pending
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))

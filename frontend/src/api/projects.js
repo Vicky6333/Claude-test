@@ -6,4 +6,5 @@ export const projectsApi = {
   create: (data) => client.post('/projects', data),
   update: (id, data) => client.patch(`/projects/${id}`, data),
   getStats: (id) => client.get(`/projects/${id}/stats`),
+  getRetrospective: (id) => client.get(`/projects/${id}/retrospective`),
 }

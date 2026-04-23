@@ -192,11 +192,16 @@ class SubmissionCreate(BaseModel):
     actual_cost: float = 0
     comment_self_review: Optional[str] = None
 
+class SubmissionPatch(BaseModel):
+    has_organic_coverage: Optional[bool] = None
+    organic_coverage_note: Optional[str] = None
+
 class AcceptanceCreate(BaseModel):
     conclusion: str
     approved_impressions: Optional[int] = None
     approved_amount: Optional[float] = None
     notes: Optional[str] = None
+    ai_evaluation_result: Optional[Any] = None
 
 class AcceptanceOut(BaseModel):
     id: UUID
@@ -222,6 +227,8 @@ class SubmissionOut(BaseModel):
     interactions: int
     actual_cost: float
     comment_self_review: Optional[str]
+    has_organic_coverage: bool = False
+    organic_coverage_note: Optional[str] = None
     cpm: Optional[float]
     cpm_status: str
     created_by: Optional[UUID]

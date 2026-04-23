@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { Sparkles, ExternalLink, CheckCircle } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Sparkles, ExternalLink, CheckCircle, Radio } from 'lucide-react'
 import { submissionsApi } from '../api/submissions'
-import { topicsApi } from '../api/topics'
 import { useAuth } from '../contexts/AuthContext'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { CpmStatusBadge, ConclusionBadge, GradeBadge } from '../components/StatusBadge'
@@ -159,9 +158,22 @@ function AcceptancePanel({ submission, onAccepted }) {
   )
 }
 
-function SubmissionCard({ submission, isHQ, onAccepted }) {
+function SubmissionCard({ submission, isHQ, onAccepted, onPatched }) {
   const [showAccept, setShowAccept] = useState(false)
+  const [patchingOrganic, setPatchingOrganic] = useState(false)
   const hasAcceptance = !!submission.acceptance
+
+  const toggleOrganic = async () => {
+    setPatchingOrganic(true)
+    try {
+      const updated = await submissionsApi.patch(submission.id, {
+        has_organic_coverage: !submission.has_organic_coverage,
+      })
+      onPatched(updated)
+    } finally {
+      setPatchingOrganic(false)
+    }
+  }
 
   return (
     <div className="card p-5">
@@ -232,6 +244,30 @@ function SubmissionCard({ submission, isHQ, onAccepted }) {
         </div>
       )}
 
+      {/* Organic coverage */}
+      {submission.has_organic_coverage && submission.organic_coverage_note && (
+        <div className="flex items-start gap-1.5 text-xs text-purple-700 bg-purple-50 px-3 py-2 rounded-lg mb-3">
+          <Radio size={12} className="shrink-0 mt-0.5" />
+          <span>{submission.organic_coverage_note}</span>
+        </div>
+      )}
+      {isHQ && (
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={toggleOrganic}
+            disabled={patchingOrganic}
+            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              submission.has_organic_coverage
+                ? 'bg-purple-50 text-purple-700 border-purple-300'
+                : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <Radio size={11} />
+            {submission.has_organic_coverage ? '已标记自来水' : '标记自来水覆盖'}
+          </button>
+        </div>
+      )}
+
       {isHQ && (
         <button
           onClick={() => setShowAccept(!showAccept)}
@@ -275,6 +311,12 @@ export default function SubmissionsPage() {
     )
   }
 
+  const handlePatched = (updated) => {
+    setSubmissions((subs) =>
+      subs.map((s) => s.id === updated.id ? { ...s, ...updated } : s)
+    )
+  }
+
   return (
     <div className="p-4 md:p-6 pb-24 md:pb-6">
       <div className="flex items-center justify-between mb-6">
@@ -304,6 +346,7 @@ export default function SubmissionsPage() {
               submission={sub}
               isHQ={user?.role === 'headquarters'}
               onAccepted={handleAccepted(sub.id)}
+              onPatched={handlePatched}
             />
           ))}
         </div>

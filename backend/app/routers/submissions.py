@@ -104,6 +104,28 @@ def get_submission(
     return submission
 
 
+@router.patch("/{submission_id}", response_model=schemas.SubmissionOut)
+def patch_submission(
+    submission_id: UUID,
+    data: schemas.SubmissionPatch,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_hq),
+):
+    submission = (
+        db.query(models.Submission)
+        .options(joinedload(models.Submission.acceptance))
+        .filter(models.Submission.id == submission_id)
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="成果不存在")
+    for field, value in data.model_dump(exclude_none=True).items():
+        setattr(submission, field, value)
+    db.commit()
+    db.refresh(submission)
+    return submission
+
+
 @router.post("/{submission_id}/ai-evaluate")
 def ai_evaluate_submission(
     submission_id: UUID,

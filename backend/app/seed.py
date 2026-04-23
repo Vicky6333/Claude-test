@@ -122,6 +122,8 @@ def seed_demo_data(db: Session):
             impressions=70000, interactions=2058, actual_cost=3200,
             cpm=45.7, cpm_status="warn",
             comment_self_review="评论前十条中4条提及果霜和新鲜度，2条出现「小象」关键词，1条用户主动问购买渠道。整体正向，未见负面。",
+            has_organic_coverage=True,
+            organic_coverage_note="北京号（北京日报新媒体）转发该篇笔记，带来约1.2万自然曝光，评论区有用户追问「小象在哪买」。",
             created_by=bj.id,
         ),
         models.Submission(
@@ -131,6 +133,7 @@ def seed_demo_data(db: Session):
             impressions=128665, interactions=4960, actual_cost=8200,
             cpm=63.7, cpm_status="fail",
             comment_self_review="评论区讨论热烈，主要围绕「果霜是不是脏东西」，品牌相关评论占比约30%，出现「直采」「社区冰箱」各1次。",
+            has_organic_coverage=False,
             created_by=sh.id,
         ),
     ]
