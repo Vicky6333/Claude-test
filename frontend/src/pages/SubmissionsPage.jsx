@@ -75,11 +75,28 @@ function AcceptancePanel({ submission, onAccepted }) {
               <GradeBadge grade={aiResult.overall_grade} />
               <span className="text-sm text-gray-700">{aiResult.grade_reason}</span>
             </div>
-            {aiResult.mind_penetration && (
-              <div className="text-xs text-gray-600 bg-white rounded p-3 border">
-                <strong>心智渗透：</strong>{aiResult.mind_penetration}
+
+            {/* 记忆点植入有效性 */}
+            {aiResult.memory_point_hits && (
+              <div className="bg-white rounded p-3 border space-y-2">
+                <div className="text-xs font-medium text-gray-700">品牌心智植入有效性</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {aiResult.memory_point_hits.mentioned?.map((pt) => (
+                    <span key={pt} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ {pt}</span>
+                  ))}
+                  {aiResult.memory_point_hits.not_mentioned?.map((pt) => (
+                    <span key={pt} className="text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">○ {pt}</span>
+                  ))}
+                </div>
+                {aiResult.memory_point_hits.top10_brand_ratio && (
+                  <div className="text-xs text-gray-500">前十条评论品牌相关占比：<span className="font-medium text-gray-700">{aiResult.memory_point_hits.top10_brand_ratio}</span></div>
+                )}
+                {aiResult.memory_point_hits.note && (
+                  <div className="text-xs text-gray-600">{aiResult.memory_point_hits.note}</div>
+                )}
               </div>
             )}
+
             {aiResult.performance_vs_baseline && (
               <div className="text-xs text-gray-600 bg-white rounded p-3 border">
                 <strong>与均值对比：</strong>{aiResult.performance_vs_baseline}

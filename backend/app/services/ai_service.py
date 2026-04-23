@@ -146,30 +146,38 @@ def evaluate_acceptance(submission_data: dict, topic_data: dict, project_data: d
     cpm = (actual_cost / impressions * 1000) if impressions > 0 else 0
     standard = CPM_STANDARDS.get(channel, {"cpm_limit": 50, "interaction_min": 1000})
 
+    key_points = project_data.get("key_memory_points", [])
+    key_points_str = "、".join(key_points) if key_points else "（未设置）"
+    baseline = (topic_data.get("account_avg_likes", 0)
+                + topic_data.get("account_avg_comments", 0)
+                + topic_data.get("account_avg_shares", 0))
+
     prompt = f"""[验收评估任务]
 项目：{project_data.get("name", "")}
 品牌心智目标：{project_data.get("brand_mind_goal", "")}
-核心记忆点：{", ".join(project_data.get("key_memory_points", []))}
+本项目核心记忆点（需逐条检验）：{key_points_str}
 
 传播数据：
-- 渠道：{channel}
-- 账号类型：{topic_data.get("account_type", "")}
-- 曝光量：{impressions:,}
-- 互动量：{interactions:,}
-- 实际花费：{actual_cost} 元
-- CPM：{cpm:.1f}
-- 账号历史均值（互动）：{topic_data.get("account_avg_likes", 0) + topic_data.get("account_avg_comments", 0) + topic_data.get("account_avg_shares", 0)}
+- 渠道：{channel} / 账号类型：{topic_data.get("account_type", "")}
+- 曝光量：{impressions:,} / 互动量：{interactions:,} / 实际花费：{actual_cost} 元
+- CPM：{cpm:.1f} / 验收标准：CPM ≤ {standard.get("cpm_limit", "N/A")}，互动量 ≥ {standard.get("interaction_min", 1000)}
+- 账号历史互动均值：{baseline}
 
-验收标准：CPM ≤ {standard.get("cpm_limit", "N/A")}，互动量 ≥ {standard.get("interaction_min", 1000)}
-评论区自评：{submission_data.get("comment_self_review", "（未填写）")}
+评论区自评（区域填写）：
+{submission_data.get("comment_self_review", "（未填写）")}
 
 请输出JSON：
 {{
-  "mind_penetration": "心智渗透评估：评论区是否可能出现目标心智词，品牌相关内容占比估算",
-  "performance_vs_baseline": "与账号历史均值对比：本次表现高于/低于均值多少",
+  "memory_point_hits": {{
+    "mentioned": ["在评论区中有迹象出现的记忆点，从{key_points_str}中选取"],
+    "not_mentioned": ["未出现的记忆点"],
+    "top10_brand_ratio": "前十条评论中品牌/产品相关内容估算占比，如「约40%」",
+    "note": "心智渗透质量说明：哪些词出现、出现形式（主动提及/被动回应）、是否形成有效认知"
+  }},
+  "performance_vs_baseline": "本次互动量{interactions}与账号均值{baseline}对比，高于/低于均值X%",
   "overall_grade": "A|B|C|D",
-  "grade_reason": "评级理由（A=量化达标+心智渗透良好，B=量化达标心智渗透弱，C=量化未达标但有亮点，D=量化未达标内容偏离主线）",
-  "suggestions": ["针对该区域下次传播的具体改进建议1", "建议2"]
+  "grade_reason": "评级理由（A=量化达标+至少2个记忆点出现在评论；B=量化达标但记忆点出现少；C=量化未达标但记忆点或内容质量有亮点；D=量化未达标且内容偏离主线）",
+  "suggestions": ["针对该区域下次传播的具体改进建议，聚焦如何提升记忆点植入有效性", "建议2"]
 }}"""
 
     raw_text = _call(SYSTEM_PROMPT, prompt, max_tokens=1200)
