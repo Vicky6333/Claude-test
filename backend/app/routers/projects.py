@@ -35,7 +35,93 @@ def create_project(
     return project
 
 
-@router.get("/{project_id}", response_model=schemas.ProjectOut)
+@router.get("/aggregate-stats")
+def get_aggregate_stats(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    projects = (
+        db.query(models.Project)
+        .options(
+            joinedload(models.Project.topics)
+            .joinedload(models.Topic.submissions)
+            .joinedload(models.Submission.acceptance),
+            joinedload(models.Project.topics)
+            .joinedload(models.Topic.creator),
+        )
+        .order_by(models.Project.start_date.asc())
+        .all()
+    )
+
+    project_rows = []
+    region_map = defaultdict(lambda: {
+        "total_topics": 0, "total_impressions": 0,
+        "cpm_sum": 0.0, "cpm_count": 0,
+        "verdict_count": 0, "pass_count": 0,
+        "projects": set(),
+    })
+
+    for proj in projects:
+        p_impressions = 0
+        p_cost = 0.0
+        p_cpm_sum = 0.0
+        p_cpm_count = 0
+        p_verdict = 0
+        p_pass = 0
+
+        for topic in proj.topics:
+            region = (topic.creator.region if topic.creator else None) or "未知"
+            region_map[region]["total_topics"] += 1
+            region_map[region]["projects"].add(str(proj.id))
+
+            for sub in topic.submissions:
+                imp = sub.impressions or 0
+                p_impressions += imp
+                p_cost += sub.actual_cost or 0
+                region_map[region]["total_impressions"] += imp
+
+                if sub.cpm and sub.cpm > 0:
+                    p_cpm_sum += sub.cpm
+                    p_cpm_count += 1
+                    region_map[region]["cpm_sum"] += sub.cpm
+                    region_map[region]["cpm_count"] += 1
+
+                if sub.acceptance:
+                    p_verdict += 1
+                    region_map[region]["verdict_count"] += 1
+                    if sub.acceptance.conclusion in ("通过", "部分通过"):
+                        p_pass += 1
+                        region_map[region]["pass_count"] += 1
+
+        project_rows.append({
+            "id": str(proj.id),
+            "name": proj.name,
+            "product": proj.product,
+            "start_date": str(proj.start_date),
+            "end_date": str(proj.end_date),
+            "status": proj.status,
+            "total_impressions": p_impressions,
+            "total_cost": p_cost,
+            "avg_cpm": p_cpm_sum / p_cpm_count if p_cpm_count > 0 else None,
+            "pass_rate": p_pass / p_verdict * 100 if p_verdict > 0 else None,
+            "total_submissions": p_verdict + (
+                sum(1 for t in proj.topics for s in t.submissions if not s.acceptance)
+            ),
+        })
+
+    region_rows = [
+        {
+            "region": region,
+            "project_count": len(d["projects"]),
+            "total_topics": d["total_topics"],
+            "total_impressions": d["total_impressions"],
+            "avg_cpm": d["cpm_sum"] / d["cpm_count"] if d["cpm_count"] > 0 else None,
+            "pass_rate": d["pass_count"] / d["verdict_count"] * 100 if d["verdict_count"] > 0 else None,
+        }
+        for region, d in sorted(region_map.items())
+    ]
+
+    return {"project_rows": project_rows, "region_rows": region_rows}
 def get_project(project_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     project = (
         db.query(models.Project)

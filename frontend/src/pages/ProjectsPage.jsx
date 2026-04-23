@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ChevronRight, Calendar, MapPin } from 'lucide-react'
+import { Plus, ChevronRight, Calendar, MapPin, BarChart2 } from 'lucide-react'
 import { projectsApi } from '../api/projects'
 import { useAuth } from '../contexts/AuthContext'
 import { LoadingSpinner } from '../components/LoadingSpinner'
@@ -112,15 +112,149 @@ function ProjectFormModal({ onClose, onCreated }) {
   )
 }
 
+function cpmColor(cpm) {
+  if (cpm == null) return 'text-gray-400'
+  if (cpm <= 40) return 'text-green-600 font-semibold'
+  if (cpm <= 60) return 'text-amber-600 font-semibold'
+  return 'text-red-600 font-semibold'
+}
+
+function AggregateStats({ aggregateStats }) {
+  const [tab, setTab] = useState('projects')
+  const { project_rows, region_rows } = aggregateStats
+
+  return (
+    <div className="mt-8 mb-4">
+      <div className="flex items-center gap-2 mb-4">
+        <BarChart2 size={16} className="text-sky-500" />
+        <h2 className="text-base font-semibold text-gray-800">跨项目数据沉淀</h2>
+        <div className="ml-auto flex gap-1 bg-gray-100 rounded-lg p-0.5">
+          <button
+            onClick={() => setTab('projects')}
+            className={`text-xs px-3 py-1.5 rounded-md transition-colors ${tab === 'projects' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >项目对比</button>
+          <button
+            onClick={() => setTab('regions')}
+            className={`text-xs px-3 py-1.5 rounded-md transition-colors ${tab === 'regions' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >区域分析</button>
+        </div>
+      </div>
+
+      {tab === 'projects' && (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-400 text-xs border-b bg-gray-50">
+                  <th className="px-4 py-3 font-medium">项目</th>
+                  <th className="px-4 py-3 font-medium">周期</th>
+                  <th className="px-4 py-3 font-medium text-right">总曝光</th>
+                  <th className="px-4 py-3 font-medium text-right">均CPM</th>
+                  <th className="px-4 py-3 font-medium text-right">达标率</th>
+                  <th className="px-4 py-3 font-medium text-right">总花费</th>
+                </tr>
+              </thead>
+              <tbody>
+                {project_rows.map((p) => (
+                  <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-800">{p.name}</div>
+                      <div className="text-xs text-sky-600">{p.product}</div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      {p.start_date?.slice(0, 7)}<br />{p.end_date?.slice(0, 7)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {p.total_impressions > 0
+                        ? <><div className="font-medium">{(p.total_impressions / 10000).toFixed(1)}万</div><div className="text-xs text-gray-400">{p.total_submissions}条成果</div></>
+                        : <span className="text-gray-400">—</span>
+                      }
+                    </td>
+                    <td className={`px-4 py-3 text-right ${cpmColor(p.avg_cpm)}`}>
+                      {p.avg_cpm != null ? `¥${p.avg_cpm.toFixed(1)}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {p.pass_rate != null
+                        ? <span className={p.pass_rate >= 80 ? 'text-green-600 font-semibold' : p.pass_rate >= 50 ? 'text-amber-600' : 'text-red-600'}>{p.pass_rate.toFixed(0)}%</span>
+                        : <span className="text-gray-400">—</span>
+                      }
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-600">
+                      {p.total_cost > 0 ? `¥${p.total_cost.toLocaleString()}` : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {project_rows.length === 0 && (
+            <div className="text-center py-8 text-gray-400 text-sm">暂无传播成果数据</div>
+          )}
+        </div>
+      )}
+
+      {tab === 'regions' && (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-400 text-xs border-b bg-gray-50">
+                  <th className="px-4 py-3 font-medium">区域</th>
+                  <th className="px-4 py-3 font-medium text-right">参与项目</th>
+                  <th className="px-4 py-3 font-medium text-right">提交选题</th>
+                  <th className="px-4 py-3 font-medium text-right">总曝光</th>
+                  <th className="px-4 py-3 font-medium text-right">均CPM</th>
+                  <th className="px-4 py-3 font-medium text-right">达标率</th>
+                </tr>
+              </thead>
+              <tbody>
+                {region_rows.map((r) => (
+                  <tr key={r.region} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-800">{r.region}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">{r.project_count}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">{r.total_topics}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">
+                      {r.total_impressions > 0 ? `${(r.total_impressions / 10000).toFixed(1)}万` : '—'}
+                    </td>
+                    <td className={`px-4 py-3 text-right ${cpmColor(r.avg_cpm)}`}>
+                      {r.avg_cpm != null ? `¥${r.avg_cpm.toFixed(1)}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {r.pass_rate != null
+                        ? <span className={r.pass_rate >= 80 ? 'text-green-600 font-semibold' : r.pass_rate >= 50 ? 'text-amber-600' : 'text-red-600'}>{r.pass_rate.toFixed(0)}%</span>
+                        : <span className="text-gray-400">—</span>
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {region_rows.length === 0 && (
+            <div className="text-center py-8 text-gray-400 text-sm">暂无区域数据</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProjectsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
+  const [aggregateStats, setAggregateStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    projectsApi.list().then(setProjects).finally(() => setLoading(false))
+    Promise.all([
+      projectsApi.list(),
+      projectsApi.getAggregateStats().catch(() => null),
+    ]).then(([ps, agg]) => {
+      setProjects(ps)
+      setAggregateStats(agg)
+    }).finally(() => setLoading(false))
   }, [])
 
   return (
@@ -186,6 +320,10 @@ export default function ProjectsPage() {
             </button>
           ))}
         </div>
+      )}
+
+      {aggregateStats && projects.length > 0 && (
+        <AggregateStats aggregateStats={aggregateStats} />
       )}
 
       {showModal && (
