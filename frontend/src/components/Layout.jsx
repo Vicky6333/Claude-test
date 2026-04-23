@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { authApi } from '../api/auth'
 import {
-  LayoutDashboard, Package, FileText, CheckSquare, LogOut, Menu, X,
+  LayoutDashboard, Package, FileText, CheckSquare, LogOut, Menu, X, Check, Edit2,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -13,8 +14,56 @@ const NAV = [
   { to: '/submissions', icon: CheckSquare, label: '验收复盘', sub: 'M4' },
 ]
 
+function UserPanel({ user, updateUser }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  const startEdit = () => { setDraft(user?.responsible_person || ''); setEditing(true) }
+  const save = async () => {
+    const updated = await authApi.updateMe({ responsible_person: draft })
+    updateUser({ responsible_person: updated.responsible_person })
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex items-start gap-3 px-3 py-2 rounded-lg text-slate-300">
+      <div className="w-7 h-7 rounded-full bg-sky-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+        {user?.display_name?.[0] || user?.username?.[0]?.toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium truncate">{user?.display_name || user?.username}</div>
+        <div className="text-xs text-slate-500">{user?.role === 'headquarters' ? '总部' : user?.region}</div>
+        <div className="flex items-center gap-1 mt-1">
+          {editing ? (
+            <>
+              <input
+                className="text-xs bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-slate-200 w-24 focus:outline-none"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+                autoFocus
+                placeholder="输入负责人"
+              />
+              <button onClick={save} className="text-green-400 hover:text-green-300"><Check size={12} /></button>
+              <button onClick={() => setEditing(false)} className="text-slate-500 hover:text-slate-300"><X size={12} /></button>
+            </>
+          ) : (
+            <button onClick={startEdit} className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <Edit2 size={10} />
+              {user?.responsible_person
+                ? <span className="text-slate-400">{user.responsible_person}</span>
+                : <span className="italic">设置负责人</span>
+              }
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Layout({ children }) {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -47,15 +96,7 @@ export default function Layout({ children }) {
           ))}
         </nav>
         <div className="px-3 py-4 border-t border-slate-700">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300">
-            <div className="w-7 h-7 rounded-full bg-sky-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {user?.display_name?.[0] || user?.username?.[0]?.toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium truncate">{user?.display_name || user?.username}</div>
-              <div className="text-xs text-slate-500">{user?.role === 'headquarters' ? '总部' : user?.region}</div>
-            </div>
-          </div>
+          <UserPanel user={user} updateUser={updateUser} />
           <button
             onClick={handleLogout}
             className="w-full mt-2 flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white text-sm transition-colors"
@@ -100,15 +141,7 @@ export default function Layout({ children }) {
               ))}
             </nav>
             <div className="px-3 py-4 border-t border-slate-700">
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300">
-                <div className="w-7 h-7 rounded-full bg-sky-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {user?.display_name?.[0] || user?.username?.[0]?.toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">{user?.display_name || user?.username}</div>
-                  <div className="text-xs text-slate-500">{user?.role === 'headquarters' ? '总部' : user?.region}</div>
-                </div>
-              </div>
+              <UserPanel user={user} updateUser={updateUser} />
               <button
                 onClick={handleLogout}
                 className="w-full mt-2 flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white text-sm transition-colors"

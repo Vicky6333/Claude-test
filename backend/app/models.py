@@ -19,6 +19,7 @@ class User(Base):
     role = Column(String(20), nullable=False)  # headquarters / region
     region = Column(String(100))
     display_name = Column(String(100))
+    responsible_person = Column(String(100))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -124,6 +125,7 @@ class Submission(Base):
     interactions = Column(Integer, default=0)
     actual_cost = Column(Float, default=0)
     comment_self_review = Column(Text)
+    comment_screenshot_urls = Column(JSON, default=list)
     has_organic_coverage = Column(Boolean, default=False)
     organic_coverage_note = Column(Text)
     cpm = Column(Float)

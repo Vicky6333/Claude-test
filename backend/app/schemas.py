@@ -24,9 +24,13 @@ class UserOut(BaseModel):
     role: str
     region: Optional[str]
     display_name: Optional[str]
+    responsible_person: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class UserPatch(BaseModel):
+    responsible_person: Optional[str] = None
 
 
 # ── Project ───────────────────────────────────────────────────────────────────
@@ -191,10 +195,12 @@ class SubmissionCreate(BaseModel):
     interactions: int = 0
     actual_cost: float = 0
     comment_self_review: Optional[str] = None
+    comment_screenshot_urls: List[str] = []
 
 class SubmissionPatch(BaseModel):
     has_organic_coverage: Optional[bool] = None
     organic_coverage_note: Optional[str] = None
+    comment_screenshot_urls: Optional[List[str]] = None
 
 class AcceptanceCreate(BaseModel):
     conclusion: str
@@ -227,6 +233,7 @@ class SubmissionOut(BaseModel):
     interactions: int
     actual_cost: float
     comment_self_review: Optional[str]
+    comment_screenshot_urls: List[str] = []
     has_organic_coverage: bool = False
     organic_coverage_note: Optional[str] = None
     cpm: Optional[float]

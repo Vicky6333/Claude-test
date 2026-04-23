@@ -223,6 +223,25 @@ function SubmissionCard({ submission, isHQ, onAccepted, onPatched }) {
         </div>
       )}
 
+      {submission.comment_screenshot_urls?.length > 0 && (
+        <div className="text-sm mb-3">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">评论区截图</span>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {submission.comment_screenshot_urls.map((url, i) => (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded"
+              >
+                <ExternalLink size={11} />截图 {i + 1}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Acceptance result summary */}
       {hasAcceptance && (
         <div className={`rounded-lg p-3 text-sm mb-3 ${

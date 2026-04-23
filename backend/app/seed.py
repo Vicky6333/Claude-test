@@ -11,16 +11,16 @@ def seed_demo_data(db: Session):
     # ── Users ──
     admin = models.User(username="admin", email="admin@retail.com",
         hashed_password=get_password_hash("admin123"),
-        role="headquarters", display_name="陈晓（总部）")
+        role="headquarters", display_name="陈晓（总部）", responsible_person="陈晓")
     bj = models.User(username="region_bj", email="bj@retail.com",
         hashed_password=get_password_hash("region123"),
-        role="region", region="北京", display_name="张磊（北京）")
+        role="region", region="北京", display_name="张磊（北京）", responsible_person="张磊")
     sh = models.User(username="region_sh", email="sh@retail.com",
         hashed_password=get_password_hash("region123"),
-        role="region", region="上海", display_name="李薇（上海）")
+        role="region", region="上海", display_name="李薇（上海）", responsible_person="李薇")
     gz = models.User(username="region_gz", email="gz@retail.com",
         hashed_password=get_password_hash("region123"),
-        role="region", region="广州", display_name="王强（广州）")
+        role="region", region="广州", display_name="王强（广州）", responsible_person="王强")
     db.add_all([admin, bj, sh, gz])
     db.flush()
 
@@ -122,6 +122,10 @@ def seed_demo_data(db: Session):
             impressions=70000, interactions=2058, actual_cost=3200,
             cpm=45.7, cpm_status="warn",
             comment_self_review="评论前十条中4条提及果霜和新鲜度，2条出现「小象」关键词，1条用户主动问购买渠道。整体正向，未见负面。",
+            comment_screenshot_urls=[
+                "https://docs.feishu.cn/placeholder/评论区截图-北京-001",
+                "https://docs.feishu.cn/placeholder/评论区截图-北京-002",
+            ],
             has_organic_coverage=True,
             organic_coverage_note="北京号（北京日报新媒体）转发该篇笔记，带来约1.2万自然曝光，评论区有用户追问「小象在哪买」。",
             created_by=bj.id,

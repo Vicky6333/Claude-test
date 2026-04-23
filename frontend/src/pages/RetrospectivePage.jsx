@@ -108,7 +108,7 @@ function SubmissionRow({ sub, rank }) {
           )}
 
           {/* expandable detail */}
-          {(sub.comment_self_review || sub.ai_eval) && (
+          {(sub.comment_self_review || sub.ai_eval || sub.comment_screenshot_urls?.length > 0) && (
             <button
               onClick={() => setExpanded(!expanded)}
               className="mt-2 text-xs text-sky-500 hover:text-sky-700"
@@ -123,6 +123,21 @@ function SubmissionRow({ sub, rank }) {
                 <div className="text-xs text-gray-600 bg-gray-50 rounded px-3 py-2">
                   <span className="font-medium text-gray-700">评论区自评：</span>
                   {sub.comment_self_review}
+                </div>
+              )}
+              {sub.comment_screenshot_urls?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {sub.comment_screenshot_urls.map((url, i) => (
+                    <a
+                      key={i}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded"
+                    >
+                      <ExternalLink size={10} />截图 {i + 1}
+                    </a>
+                  ))}
                 </div>
               )}
               {sub.ai_eval && (

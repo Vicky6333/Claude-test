@@ -12,4 +12,5 @@ export const authApi = {
     return res.data
   },
   getMe: () => client.get('/auth/me'),
+  updateMe: (data) => client.patch('/auth/me', data),
 }

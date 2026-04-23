@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronLeft, Sparkles, ChevronDown, ChevronUp, Plus, Trash2, ExternalLink } from 'lucide-react'
 import { topicsApi } from '../api/topics'
 import { submissionsApi } from '../api/submissions'
 import { useAuth } from '../contexts/AuthContext'
@@ -33,9 +33,13 @@ function SubmissionFormModal({ topicId, onClose, onCreated }) {
     impressions: '', interactions: '', actual_cost: '',
     comment_self_review: '',
   })
+  const [screenshotUrls, setScreenshotUrls] = useState([''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const setUrl = (i) => (e) => setScreenshotUrls((u) => u.map((v, idx) => idx === i ? e.target.value : v))
+  const addUrl = () => setScreenshotUrls((u) => [...u, ''])
+  const removeUrl = (i) => setScreenshotUrls((u) => u.filter((_, idx) => idx !== i))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,6 +51,7 @@ function SubmissionFormModal({ topicId, onClose, onCreated }) {
         impressions: parseInt(form.impressions) || 0,
         interactions: parseInt(form.interactions) || 0,
         actual_cost: parseFloat(form.actual_cost) || 0,
+        comment_screenshot_urls: screenshotUrls.filter(Boolean),
       }
       const sub = await submissionsApi.create(data)
       onCreated(sub)
@@ -99,6 +104,33 @@ function SubmissionFormModal({ topicId, onClose, onCreated }) {
           <div>
             <label className="label">评论区自评</label>
             <textarea className="input h-20 resize-none" placeholder="评论区质量说明，是否出现品牌心智相关内容..." value={form.comment_self_review} onChange={set('comment_self_review')} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="label mb-0">评论区截图链接</label>
+              <button type="button" onClick={addUrl} className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700">
+                <Plus size={12} />添加链接
+              </button>
+            </div>
+            <div className="space-y-2">
+              {screenshotUrls.map((url, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    className="input flex-1 text-sm"
+                    type="url"
+                    placeholder="粘贴飞书/云盘截图链接..."
+                    value={url}
+                    onChange={setUrl(i)}
+                  />
+                  {screenshotUrls.length > 1 && (
+                    <button type="button" onClick={() => removeUrl(i)} className="text-gray-400 hover:text-red-500 shrink-0">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">可附多张评论区截图链接，便于总部回溯验收</p>
           </div>
           {error && <div className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
           <div className="flex justify-end gap-3 pt-2">
