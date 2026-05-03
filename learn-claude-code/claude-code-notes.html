@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code 完全拆解：从零理解 AI Agent 架构</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #0f0f13;
+      color: #e0e0e0;
+      line-height: 1.8;
+    }
+
+    /* ── 顶部 hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 80px 24px 60px;
+      text-align: center;
+      border-bottom: 1px solid #2a2a3e;
+    }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.8rem);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: #7c6af7; }
+    .hero .subtitle {
+      color: #8888aa;
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+    .tagline {
+      display: inline-block;
+      background: rgba(124,106,247,0.15);
+      border: 1px solid rgba(124,106,247,0.4);
+      color: #b8aaff;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-size: 1.05rem;
+      font-weight: 500;
+    }
+
+    /* ── 布局 ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── 核心循环卡片 ── */
+    .core-loop {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 16px;
+      padding: 36px;
+      margin: 48px 0;
+      text-align: center;
+    }
+    .core-loop h2 {
+      color: #7c6af7;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+    .loop-steps {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .loop-step {
+      background: #12122a;
+      border: 1px solid #2a2a4e;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      color: #c8c8e8;
+      width: fit-content;
+      min-width: 240px;
+    }
+    .loop-arrow {
+      color: #7c6af7;
+      font-size: 1.4rem;
+      line-height: 1.2;
+      padding: 2px 0;
+    }
+    .loop-note {
+      margin-top: 20px;
+      color: #6666aa;
+      font-size: 0.9rem;
+    }
+
+    /* ── 阶段标题 ── */
+    .phase {
+      margin: 56px 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .phase-badge {
+      background: linear-gradient(135deg, #7c6af7, #5a4fcf);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+    .phase h2 {
+      font-size: 1.25rem;
+      color: #c8c8f0;
+      font-weight: 600;
+    }
+
+    /* ── 课程卡片 ── */
+    .card {
+      background: #151520;
+      border: 1px solid #252535;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #4a4a7a; }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .card-num {
+      background: linear-gradient(135deg, #7c6af7, #5a4fcf);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      margin-top: 3px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e0e0ff;
+      margin-bottom: 4px;
+    }
+    .card-motto {
+      font-size: 0.85rem;
+      color: #7c6af7;
+      font-style: italic;
+    }
+
+    .card-body { font-size: 0.95rem; color: #a0a0c0; }
+    .card-body p { margin-bottom: 10px; }
+    .card-body strong { color: #c8c8e8; }
+
+    /* ── code block ── */
+    pre {
+      background: #0d0d1a;
+      border: 1px solid #1e1e35;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.82rem;
+      color: #a8b4d8;
+      margin: 12px 0;
+      line-height: 1.6;
+    }
+    code {
+      background: #1e1e35;
+      color: #a8b4d8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.88em;
+    }
+    pre code { background: none; padding: 0; font-size: inherit; }
+
+    /* ── 总结标签 ── */
+    .summary-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,106,247,0.12);
+      border: 1px solid rgba(124,106,247,0.3);
+      color: #b8aaff;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 14px;
+    }
+    .summary-tag::before { content: "💡"; font-size: 0.9em; }
+
+    /* ── 对应 Claude Code ── */
+    .cc-note {
+      background: rgba(99,179,237,0.08);
+      border-left: 3px solid #4299e1;
+      padding: 10px 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      font-size: 0.88rem;
+      color: #88aacc;
+    }
+    .cc-note strong { color: #7ec8e3; }
+
+    /* ── 表格 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.88rem;
+    }
+    th {
+      background: #1a1a30;
+      color: #8888cc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid #2a2a4e;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e1e32;
+      color: #a0a0c0;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    td code { font-size: 0.82em; }
+
+    /* ── 汇总表格 ── */
+    .summary-table th:first-child,
+    .summary-table td:first-child {
+      color: #7c6af7;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── 最终公式 ── */
+    .formula {
+      background: linear-gradient(135deg, #1a1a2e, #12122a);
+      border: 1px solid #3a3a5e;
+      border-radius: 16px;
+      padding: 36px;
+      margin: 48px 0 0;
+      text-align: center;
+    }
+    .formula h2 {
+      color: #7c6af7;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+    .formula pre {
+      background: transparent;
+      border: none;
+      text-align: left;
+      display: inline-block;
+      color: #c8c8e8;
+      font-size: 0.95rem;
+    }
+    .formula-note {
+      margin-top: 20px;
+      color: #6666aa;
+      font-size: 0.9rem;
+    }
+
+    /* ── footer ── */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: #444466;
+      font-size: 0.85rem;
+      border-top: 1px solid #1a1a2e;
+    }
+    footer a { color: #6666aa; text-decoration: none; }
+    footer a:hover { color: #9999cc; }
+
+    @media (max-width: 600px) {
+      .card { padding: 20px; }
+      .card-header { flex-direction: column; gap: 8px; }
+      .phase { flex-direction: column; align-items: flex-start; gap: 8px; }
+      table { font-size: 0.8rem; }
+      th, td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Claude Code <span>完全拆解</span></h1>
+  <p class="subtitle">从零理解 AI Agent 架构 · 适合文科背景、零代码基础的读者</p>
+  <div class="tagline">模型是驾驶者，Harness 是载具</div>
+</div>
+
+<div class="container">
+
+  <!-- 核心循环 -->
+  <div class="core-loop">
+    <h2>核心循环 · 所有章节的基础</h2>
+    <div class="loop-steps">
+      <div class="loop-step">用户提问</div>
+      <div class="loop-arrow">↓</div>
+      <div class="loop-step">AI 思考 → 决定调用工具</div>
+      <div class="loop-arrow">↓</div>
+      <div class="loop-step">执行工具，把结果返回给 AI</div>
+      <div class="loop-arrow">↓</div>
+      <div class="loop-step">AI 继续思考 → 还要调用工具？</div>
+      <div class="loop-arrow">↓ 不需要了</div>
+      <div class="loop-step">返回最终答案</div>
+    </div>
+    <p class="loop-note">这个 while 循环贯穿 s01 到 s12，每节只是在它上面加一层机制。</p>
+  </div>
+
+  <!-- 第一阶段 -->
+  <div class="phase">
+    <span class="phase-badge">第一阶段</span>
+    <h2>让 AI 转起来（s01 – s02）</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s01</span>
+      <div>
+        <div class="card-title">Agent Loop</div>
+        <div class="card-motto">"One loop &amp; Bash is all you need"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>没有循环时，AI 每次回答完就停了，你得手动把结果粘回去继续问。你自己就是那个循环，很累。</p>
+      <pre>没有 Agent：  你 → 问AI → 复制结果 → 执行 → 粘回来 → 继续问…（你在手动循环）
+有了 Agent：  你 → 问AI → AI自己转 → 完成    （AI在自动循环）</pre>
+    </div>
+    <div class="summary-tag">AI 能自己转了</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s02</span>
+      <div>
+        <div class="card-title">Tool Use</div>
+        <div class="card-motto">"加一个工具，只加一个 handler"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>只有 bash 一个工具时，所有操作都走终端命令，既不安全也不灵活。</p>
+      <p><strong>解决方案：</strong>用一张「调度表」管理所有工具。AI 说"我要用 <code>read_file</code>"，代码查表，找到对应函数执行。想加新工具，只需往表里加一行，循环本身永远不用动。</p>
+      <table>
+        <tr><th>工具名</th><th>干什么</th></tr>
+        <tr><td><code>bash</code></td><td>执行终端命令</td></tr>
+        <tr><td><code>read_file</code></td><td>读文件</td></tr>
+        <tr><td><code>write_file</code></td><td>写文件</td></tr>
+        <tr><td><code>edit_file</code></td><td>修改文件中的某段文字</td></tr>
+      </table>
+    </div>
+    <div class="summary-tag">AI 能用多种工具了</div>
+  </div>
+
+  <!-- 第二阶段 -->
+  <div class="phase">
+    <span class="phase-badge">第二阶段</span>
+    <h2>让 AI 不迷路（s03 – s06）</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s03</span>
+      <div>
+        <div class="card-title">TodoWrite</div>
+        <div class="card-motto">"没有计划的 agent 走哪算哪"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>多步任务时，AI 对话越来越长，早期指令被"挤出"注意力。做 10 步任务，做完前 3 步可能就忘了后面 7 步。</p>
+      <p><strong>解决方案：</strong>让 AI 自己维护任务清单，同一时间只能有一个 <code>[&gt;]</code>，强制专注当前这步。</p>
+      <pre>[ ] 第1步：读文件          ← pending（待办）
+[&gt;] 第2步：加类型注释      ← in_progress（进行中）
+[x] 第3步：写测试          ← completed（已完成）</pre>
+      <p><strong>催更机制：</strong>AI 超过 3 轮不更新清单，系统自动插入提醒。不靠自觉，靠代码强制催。</p>
+      <div class="cc-note"><strong>对应 Claude Code：</strong>你用 Claude Code 时看到的任务进度列表，就是这个原理。</div>
+    </div>
+    <div class="summary-tag">AI 不会在长任务里迷路了</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s04</span>
+      <div>
+        <div class="card-title">Subagent</div>
+        <div class="card-motto">"大任务拆小，每个小任务干净的上下文"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>AI 干活越久，记忆里堆的垃圾越多（读了 20 个文件的内容全在记忆里），越来越容易被历史淹没。</p>
+      <p><strong>解决方案：</strong>派一个「小弟 AI」去干脏活，只把结论汇报给「老板 AI」：</p>
+      <pre>老板AI（记忆干净）                  小弟AI（用完即扔）
+┌──────────────┐   派任务 ──────▶ ┌──────────────┐
+│ 记忆: [...]  │                  │ 记忆: []全新 │
+│              │                  │ 读了20个文件  │
+│ 结果: "pytest"│◀── 只返回结论 ─ │ 执行了30条命令│
+└──────────────┘                  └──── 记忆丢弃 ┘</pre>
+    </div>
+    <div class="summary-tag">AI 能分工了，不被历史淹没</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s05</span>
+      <div>
+        <div class="card-title">Skills</div>
+        <div class="card-motto">"用到什么知识，临时加载什么知识"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>把所有专业知识都塞进 AI 的"开场白"太浪费——10 份手册 × 每份 2000 字 = 20000 token，大部分跟当前任务无关。</p>
+      <p><strong>解决方案：</strong>两层加载。</p>
+      <pre>第一层（始终存在，便宜）：
+  只放技能名称和一句描述，AI 知道有什么可用
+
+第二层（按需加载，用到才取）：
+  AI 说"我需要 git 规范" → 这时才把 2000 字完整内容加载进来</pre>
+      <div class="cc-note"><strong>对应 Claude Code：</strong>项目里的 <code>CLAUDE.md</code> 文件就是第一层，告诉 AI 这个项目有什么规范。</div>
+    </div>
+    <div class="summary-tag">AI 不被无用知识撑死了</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s06</span>
+      <div>
+        <div class="card-title">Context Compact</div>
+        <div class="card-motto">"上下文总会满，要有办法腾地方"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>AI 的记忆有容量上限，读 30 个文件、跑 20 条命令轻松撑满，撑满了就没法工作了。</p>
+      <p><strong>解决方案：</strong>三层压缩，激进程度递增。</p>
+      <table>
+        <tr><th>层级</th><th>触发时机</th><th>做什么</th></tr>
+        <tr><td>第一层：微压缩</td><td>每轮自动</td><td>把 3 轮前的工具结果替换成一行占位符</td></tr>
+        <tr><td>第二层：自动压缩</td><td>记忆快满时</td><td>把完整对话存硬盘，让 AI 总结成摘要替换历史</td></tr>
+        <tr><td>第三层：手动压缩</td><td>AI 主动触发</td><td>和第二层一样，AI 自己觉得该整理时用</td></tr>
+      </table>
+      <div class="cc-note"><strong>对应 Claude Code：</strong>你偶尔看到"上下文已压缩，继续工作…"就是这个机制。</div>
+    </div>
+    <div class="summary-tag">AI 可以无限工作，不会被记忆撑死</div>
+  </div>
+
+  <!-- 第三阶段 -->
+  <div class="phase">
+    <span class="phase-badge">第三阶段</span>
+    <h2>让目标跨越对话存活（s07 – s08）</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s07</span>
+      <div>
+        <div class="card-title">Task System</div>
+        <div class="card-motto">"大目标要拆成小任务，排好序，记在磁盘上"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>s03 的任务清单只在内存里，一旦压缩就消失，而且没有依赖关系。</p>
+      <p><strong>解决方案：</strong>每个任务变成一个 JSON 文件存在硬盘，带依赖关系。</p>
+      <pre>任务1（已完成）
+    ├── 任务2（等任务1完成才能开始）──┐
+    └── 任务3（等任务1完成才能开始）──┤
+                                       └── 任务4（等2和3都完成）</pre>
+      <p><strong>自动解锁：</strong>完成任务1，系统自动把它从任务2和3的等待列表里删掉，不需要人工维护。</p>
+      <div class="cc-note"><strong>为什么重要：</strong>这是后面多 AI 协作的共享看板基础——就像团队共用一个 Jira。</div>
+    </div>
+    <div class="summary-tag">目标跨对话、跨压缩永久保存，还带依赖顺序</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s08</span>
+      <div>
+        <div class="card-title">Background Tasks</div>
+        <div class="card-motto">"慢操作丢后台，agent 继续想下一步"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong><code>npm install</code>、跑测试、<code>docker build</code> 这些命令要好几分钟，AI 只能傻等。</p>
+      <p><strong>解决方案：</strong>把慢命令丢到后台线程，AI 继续干其他事，完成了自动通知。</p>
+      <pre>t=0s  → 后台启动: pytest（预计30秒）
+t=0s  → AI 开始写文档（不等 pytest）
+t=10s → 文档写完，AI 继续做别的
+t=30s → pytest 完成，结果进通知队列，下轮自动告知 AI</pre>
+    </div>
+    <div class="summary-tag">慢任务不阻塞 AI，并行执行</div>
+  </div>
+
+  <!-- 第四阶段 -->
+  <div class="phase">
+    <span class="phase-badge">第四阶段</span>
+    <h2>多个 AI 组成团队（s09 – s12）</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s09</span>
+      <div>
+        <div class="card-title">Agent Teams</div>
+        <div class="card-motto">"任务太大一个人干不完，要能分给队友"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>s04 的子 AI 是一次性的，用完即销毁，没有身份，不能持续通信。</p>
+      <p><strong>解决方案：</strong>给每个队员一个文件邮箱。<strong>发消息</strong> = 往对方文件追加一行 JSON；<strong>收消息</strong> = 读取自己的文件，读完清空。</p>
+      <pre>.team/
+  config.json      ← 团队花名册（谁在、什么角色、什么状态）
+  inbox/
+    alice.jsonl    ← alice 的收件箱
+    bob.jsonl      ← bob 的收件箱
+    lead.jsonl     ← 队长的收件箱</pre>
+      <p>队员生命周期：上岗工作 → 任务完成变空闲 → 收到新任务继续工作（不会消失）。</p>
+    </div>
+    <div class="summary-tag">多个 AI 能互相通信，持续协作</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s10</span>
+      <div>
+        <div class="card-title">Team Protocols</div>
+        <div class="card-motto">"队友之间要有统一的沟通规矩"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>s09 的队员没有正式协商机制——直接杀线程可能损坏文件，危险操作没有审批就执行。</p>
+      <p><strong>解决方案：</strong>两套握手协议（关机握手 + 计划审批），共用同一个模式：唯一的 <code>request_id</code> 把请求和响应串起来。</p>
+      <pre>队长 ──shutdown_request──▶ alice  {request_id: "abc"}
+队长 ◀──shutdown_response─── alice  {request_id: "abc", approve: true}
+
+bob ──plan_approval──▶ 队长  {request_id: "xyz", plan: "重构认证模块"}
+bob ◀──plan_approval_response─── 队长  {approve: true}</pre>
+    </div>
+    <div class="summary-tag">协作有规矩，可追踪、可审批、可拒绝</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s11</span>
+      <div>
+        <div class="card-title">Autonomous Agents</div>
+        <div class="card-motto">"队友自己看看板，有活就认领"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>队员只在被指派时才动，任务看板上的任务要队长一个个手动分配，团队大了管不过来。</p>
+      <p><strong>解决方案：</strong>队员有 WORK / IDLE 两个阶段，空闲时每 5 秒自动扫看板。</p>
+      <pre>WORK 阶段（干活）
+    ↓ 干完了，进入空闲
+IDLE 阶段（每5秒扫一次，最多60秒）
+    ├── 查收件箱 → 有消息? → 回去干活
+    ├── 扫任务看板 → 有没人认领的任务? → 认领 → 干活
+    └── 60秒没活 → 自动关机</pre>
+      <p><strong>防抢锁：</strong>多个队员同时看到同一个任务，互斥锁保证只有一人抢到。<br>
+      <strong>身份重注入：</strong>上下文压缩后，系统自动告诉 AI "你是 alice，后端开发"。</p>
+    </div>
+    <div class="summary-tag">队员自己找活，自己协调，自己关机</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">s12</span>
+      <div>
+        <div class="card-title">Worktree Isolation</div>
+        <div class="card-motto">"各干各的目录，互不干扰"</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>解决什么问题：</strong>所有队员在同一个目录干活，两人同时改 <code>config.py</code>，互相覆盖，谁也没法干净回滚。</p>
+      <p><strong>解决方案：</strong>给每个任务开一个独立的 git 目录（worktree），用任务 ID 绑定。</p>
+      <pre>控制层（.tasks/）          执行层（.worktrees/）
+  task_1.json  ←──→      auth-refactor/   alice 在这里改代码
+  task_2.json  ←──→      ui-login/        bob 在这里改代码</pre>
+      <p>alice 和 bob 改同一个文件，各改各的，完全不冲突。完成后一行命令：删目录 + 任务自动标完成 + 写事件日志。</p>
+    </div>
+    <div class="summary-tag">并行不冲突，每个任务有自己的独立空间</div>
+  </div>
+
+  <!-- 汇总表 -->
+  <div class="phase">
+    <span class="phase-badge">总览</span>
+    <h2>全部 12 节一张表</h2>
+  </div>
+
+  <table class="summary-table">
+    <tr><th>节</th><th>机制</th><th>格言</th><th>解决什么</th></tr>
+    <tr><td>s01</td><td>Agent Loop</td><td>One loop &amp; Bash is all you need</td><td>AI 能自己转</td></tr>
+    <tr><td>s02</td><td>Tool Use</td><td>加一个工具，只加一个 handler</td><td>AI 能用多种工具</td></tr>
+    <tr><td>s03</td><td>TodoWrite</td><td>没有计划的 agent 走哪算哪</td><td>AI 不迷路</td></tr>
+    <tr><td>s04</td><td>Subagent</td><td>大任务拆小，每个小任务干净的上下文</td><td>AI 能分工</td></tr>
+    <tr><td>s05</td><td>Skills</td><td>用到什么知识，临时加载什么知识</td><td>不被知识撑死</td></tr>
+    <tr><td>s06</td><td>Context Compact</td><td>上下文总会满，要有办法腾地方</td><td>无限工作</td></tr>
+    <tr><td>s07</td><td>Task System</td><td>大目标要拆成小任务，排好序，记在磁盘上</td><td>目标跨对话存活</td></tr>
+    <tr><td>s08</td><td>Background Tasks</td><td>慢操作丢后台，agent 继续想下一步</td><td>不傻等</td></tr>
+    <tr><td>s09</td><td>Agent Teams</td><td>任务太大一个人干不完，要能分给队友</td><td>多 AI 协作</td></tr>
+    <tr><td>s10</td><td>Team Protocols</td><td>队友之间要有统一的沟通规矩</td><td>协作有规矩</td></tr>
+    <tr><td>s11</td><td>Autonomous Agents</td><td>队友自己看看板，有活就认领</td><td>自组织</td></tr>
+    <tr><td>s12</td><td>Worktree Isolation</td><td>各干各的目录，互不干扰</td><td>并行不冲突</td></tr>
+  </table>
+
+  <!-- 最终公式 -->
+  <div class="formula">
+    <h2>Claude Code = 这 12 层叠在一起</h2>
+    <pre>Claude Code
+  = while 循环（s01）
+  + 工具调度表（s02）
+  + TodoWrite（s03）
+  + 子 Agent（s04）
+  + 按需 Skill（s05）
+  + 上下文压缩（s06）
+  + 持久化任务图（s07）
+  + 后台执行（s08）
+  + 团队邮箱（s09）
+  + 握手协议（s10）
+  + 自主认领（s11）
+  + worktree 隔离（s12）</pre>
+    <p class="formula-note">这不是魔法，是工程。每一层都有名字，都有原理，都能说清楚。</p>
+  </div>
+
+</div>
+
+<footer>
+  整理自 <a href="https://github.com/shareAI-lab/learn-claude-code" target="_blank">learn-claude-code</a> 教程
+</footer>
+
+</body>
+</html>
