@@ -1,0 +1,9 @@
+{
+  "language": "zh",
+  "skillOverrides": {
+    "roundtable-seminar": "on"
+  },
+  "permissions": {
+    "allow": ["Read", "Write", "Edit", "Bash"]
+  }
+}
