@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>下钟计时器</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --accent-soft: #0ea5e9;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --good: #4ade80;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      border: 1px solid var(--line);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+    .field { margin-bottom: 18px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: var(--accent); }
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      margin: 4px 0 18px;
+      user-select: none;
+    }
+    .toggle input { width: auto; }
+    #wageFields { display: none; }
+    .result {
+      margin-top: 8px;
+      padding: 20px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(14,165,233,.06));
+      border: 1px solid rgba(56,189,248,.3);
+      text-align: center;
+    }
+    .result .label { font-size: 13px; color: var(--muted); }
+    .result .offtime {
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 6px 0;
+      letter-spacing: 1px;
+    }
+    .countdown { font-size: 15px; color: var(--good); margin-top: 4px; }
+    .countdown.done { color: var(--good); font-weight: 600; }
+    .wage-line {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--line);
+      font-size: 14px;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+    }
+    .wage-line span:last-child { color: var(--accent); font-weight: 600; }
+    .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 8px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⏰ 下钟计时器</h1>
+    <p class="subtitle">输入上班时间和坐班时长，自动算出下班时间</p>
+
+    <div class="row">
+      <div class="field">
+        <label for="startTime">上班时间</label>
+        <input type="time" id="startTime" />
+      </div>
+      <div class="field">
+        <label for="hours">坐班时长（小时）</label>
+        <input type="number" id="hours" min="0" step="0.5" placeholder="如 8" value="8" />
+      </div>
+    </div>
+
+    <label class="toggle">
+      <input type="checkbox" id="wageToggle" />
+      算一算时薪 💰
+    </label>
+
+    <div id="wageFields">
+      <div class="field">
+        <label for="salary">本次收入（元）</label>
+        <input type="number" id="salary" min="0" step="0.01" placeholder="如 300" />
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="label">预计下班时间</div>
+      <div class="offtime" id="offtime">--:--</div>
+      <div class="countdown" id="countdown"></div>
+      <div class="wage-line" id="wageLine" style="display:none;">
+        <span>时薪</span>
+        <span id="wageValue">--</span>
+      </div>
+    </div>
+    <p class="hint" id="hint">填好上班时间即可看到结果</p>
+
+    <footer>下班快乐 🎉</footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const startTimeEl = $('startTime');
+    const hoursEl = $('hours');
+    const wageToggle = $('wageToggle');
+    const wageFields = $('wageFields');
+    const salaryEl = $('salary');
+    const offtimeEl = $('offtime');
+    const countdownEl = $('countdown');
+    const wageLine = $('wageLine');
+    const wageValueEl = $('wageValue');
+    const hintEl = $('hint');
+
+    let offDate = null; // 计算出的下班时刻（Date）
+
+    // 默认填入当前时间作为上班时间
+    function pad(n) { return String(n).padStart(2, '0'); }
+    (function initNow() {
+      const now = new Date();
+      startTimeEl.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    })();
+
+    wageToggle.addEventListener('change', () => {
+      wageFields.style.display = wageToggle.checked ? 'block' : 'none';
+      calculate();
+    });
+
+    [startTimeEl, hoursEl, salaryEl].forEach((el) =>
+      el.addEventListener('input', calculate)
+    );
+
+    function calculate() {
+      const timeStr = startTimeEl.value;
+      const hours = parseFloat(hoursEl.value);
+
+      if (!timeStr || isNaN(hours) || hours <= 0) {
+        offtimeEl.textContent = '--:--';
+        countdownEl.textContent = '';
+        wageLine.style.display = 'none';
+        offDate = null;
+        hintEl.textContent = '请填写上班时间和坐班时长';
+        return;
+      }
+
+      const [h, m] = timeStr.split(':').map(Number);
+      const start = new Date();
+      start.setHours(h, m, 0, 0);
+
+      const off = new Date(start.getTime() + hours * 3600 * 1000);
+      offDate = off;
+
+      // 跨天提示
+      const crossDay = off.getDate() !== start.getDate();
+      offtimeEl.textContent =
+        `${pad(off.getHours())}:${pad(off.getMinutes())}` +
+        (crossDay ? ' （次日）' : '');
+
+      // 时薪
+      if (wageToggle.checked) {
+        const salary = parseFloat(salaryEl.value);
+        if (!isNaN(salary) && salary > 0) {
+          const wage = salary / hours;
+          wageValueEl.textContent = `¥ ${wage.toFixed(2)} / 小时`;
+          wageLine.style.display = 'flex';
+        } else {
+          wageLine.style.display = 'none';
+        }
+      } else {
+        wageLine.style.display = 'none';
+      }
+
+      updateCountdown();
+    }
+
+    function updateCountdown() {
+      if (!offDate) return;
+      const diff = offDate.getTime() - Date.now();
+
+      if (diff <= 0) {
+        countdownEl.textContent = '🎉 已经可以下班啦！';
+        countdownEl.classList.add('done');
+        hintEl.textContent = '辛苦了，收工~';
+        return;
+      }
+      countdownEl.classList.remove('done');
+
+      const totalMin = Math.floor(diff / 60000);
+      const hh = Math.floor(totalMin / 60);
+      const mm = totalMin % 60;
+      const ss = Math.floor((diff % 60000) / 1000);
+
+      let txt = '距离下班还有 ';
+      if (hh > 0) txt += `${hh} 小时 `;
+      txt += `${mm} 分 ${pad(ss)} 秒`;
+      countdownEl.textContent = txt;
+      hintEl.textContent = '坚持住，马上就下班 💪';
+    }
+
+    setInterval(updateCountdown, 1000);
+    calculate();
+  </script>
+</body>
+</html>
