@@ -1,5 +1,7 @@
 name: Deploy 下钟计时器 to GitHub Pages
 
+# 将 clock-out-timer.html 发布到 GitHub Pages
+
 on:
   push:
     branches: ["claude/clock-out-timer-99IOI"]
