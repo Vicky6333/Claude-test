@@ -6,106 +6,209 @@
   <title>下钟计时器</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #38bdf8;
-      --accent-soft: #0ea5e9;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --good: #4ade80;
-      --line: #334155;
+      --text: #1d1d1f;
+      --muted: #86868b;
+      --accent: #0071e3;
+      --accent-2: #5856d6;
+      --green: #34c759;
+      --field: #f5f5f7;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif;
-      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
       color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
+      overflow: hidden;
+      background: linear-gradient(160deg, #e9f0ff 0%, #f5f5f7 45%, #ffeef5 100%);
     }
+    /* 背景柔光球，毛玻璃卡片透出来更有苹果味 */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: .55;
+      z-index: 0;
+      animation: float 14s ease-in-out infinite;
+    }
+    .blob.b1 { width: 360px; height: 360px; background: #a5c8ff; top: -80px; left: -60px; }
+    .blob.b2 { width: 320px; height: 320px; background: #ffc0dd; bottom: -90px; right: -50px; animation-delay: -5s; }
+    .blob.b3 { width: 260px; height: 260px; background: #c9b8ff; bottom: 40px; left: -70px; animation-delay: -9s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-26px) scale(1.06); }
+    }
+
     .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 32px;
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, .72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 28px;
+      padding: 30px 28px;
       width: 100%;
-      max-width: 440px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.4);
-      border: 1px solid var(--line);
+      max-width: 430px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .04);
+      border: 1px solid rgba(255, 255, 255, .6);
+      animation: pop-in .55s cubic-bezier(.16, 1, .3, 1);
     }
+    @keyframes pop-in {
+      from { opacity: 0; transform: translateY(18px) scale(.97); }
+      to { opacity: 1; transform: none; }
+    }
+
     h1 {
-      font-size: 24px;
-      margin-bottom: 4px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -.5px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
-    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-    .field { margin-bottom: 18px; }
-    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    input {
+    .clock {
+      display: inline-block;
+      font-size: 28px;
+      transform-origin: 50% 58%;
+      animation: tick 2.2s ease-in-out infinite;
+    }
+    @keyframes tick {
+      0%, 100% { transform: rotate(-9deg); }
+      50% { transform: rotate(9deg); }
+    }
+    .subtitle { color: var(--muted); font-size: 14px; margin: 6px 0 24px; }
+
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500; }
+    input[type="time"], input[type="number"], input[type="month"] {
       width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #0f172a;
+      padding: 13px 15px;
+      border-radius: 13px;
+      border: 1.5px solid transparent;
+      background: var(--field);
       color: var(--text);
       font-size: 16px;
+      font-family: inherit;
       outline: none;
-      transition: border-color .15s;
+      transition: border-color .2s, box-shadow .2s, background .2s;
     }
-    input:focus { border-color: var(--accent); }
+    input:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(0, 113, 227, .14);
+    }
     .row { display: flex; gap: 12px; }
     .row .field { flex: 1; }
+
+    /* iOS 风格开关 */
     .toggle {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--muted);
-      cursor: pointer;
-      margin: 4px 0 18px;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 500;
+      margin: 6px 0 18px;
       user-select: none;
     }
-    .toggle input { width: auto; }
-    #wageFields { display: none; }
+    .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; cursor: pointer;
+      background: #e9e9ea; border-radius: 31px;
+      transition: background .3s;
+    }
+    .slider::before {
+      content: ""; position: absolute;
+      height: 27px; width: 27px; left: 2px; top: 2px;
+      background: #fff; border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+      transition: transform .28s cubic-bezier(.16, 1, .3, 1);
+    }
+    .switch input:checked + .slider { background: var(--green); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    #wageFields { display: none; animation: pop-in .35s ease; }
+
     .result {
-      margin-top: 8px;
-      padding: 20px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(14,165,233,.06));
-      border: 1px solid rgba(56,189,248,.3);
+      margin-top: 4px;
+      padding: 22px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(0, 113, 227, .09), rgba(88, 86, 214, .07));
+      border: 1px solid rgba(0, 113, 227, .16);
       text-align: center;
+      transition: background .4s, border-color .4s;
     }
-    .result .label { font-size: 13px; color: var(--muted); }
-    .result .offtime {
-      font-size: 40px;
+    .result.done {
+      background: linear-gradient(135deg, rgba(52, 199, 89, .14), rgba(48, 209, 88, .08));
+      border-color: rgba(52, 199, 89, .3);
+    }
+    .result .cap { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .offtime {
+      font-size: 44px;
       font-weight: 700;
+      letter-spacing: -1px;
       color: var(--accent);
-      margin: 6px 0;
-      letter-spacing: 1px;
+      margin: 6px 0 2px;
+      transition: color .4s;
     }
-    .countdown { font-size: 15px; color: var(--good); margin-top: 4px; }
-    .countdown.done { color: var(--good); font-weight: 600; }
+    .result.done .offtime { color: var(--green); }
+    .offtime.pop { animation: numpop .42s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes numpop {
+      0% { transform: scale(.78); opacity: .5; }
+      60% { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .offtime .next { font-size: 15px; color: var(--muted); font-weight: 500; }
+
+    .countdown { font-size: 15px; color: var(--accent); margin-top: 6px; font-weight: 500; }
+    .countdown.celebrate {
+      color: var(--green);
+      font-weight: 600;
+      font-size: 17px;
+      animation: bounce .6s ease infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
     .wage-line {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px dashed var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(0, 0, 0, .12);
       font-size: 14px;
-      color: var(--text);
       display: flex;
       justify-content: space-between;
+      align-items: baseline;
     }
-    .wage-line span:last-child { color: var(--accent); font-weight: 600; }
-    .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 8px; }
-    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 20px; }
+    .wage-line .k { color: var(--muted); font-weight: 500; }
+    .wage-line .v { color: var(--accent); font-weight: 700; font-size: 16px; }
+
+    .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 12px; }
+    .tip { color: var(--muted); font-size: 12px; line-height: 1.5; text-align: left; margin: -6px 0 4px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+
+    /* 撒花 */
+    .confetti-piece {
+      position: fixed; top: -14px; width: 9px; height: 15px;
+      border-radius: 2px; z-index: 50; pointer-events: none;
+      animation: fall 2.1s linear forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(106vh) rotate(560deg); opacity: .85; }
+    }
   </style>
 </head>
 <body>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+
   <div class="card">
-    <h1>⏰ 下钟计时器</h1>
+    <h1><span class="clock">⏰</span> 下钟计时器</h1>
     <p class="subtitle">输入上班时间和坐班时长，自动算出下班时间</p>
 
     <div class="row">
@@ -120,24 +223,42 @@
     </div>
 
     <label class="toggle">
-      <input type="checkbox" id="wageToggle" />
-      算一算时薪 💰
+      <span>算一算时薪 💰</span>
+      <span class="switch">
+        <input type="checkbox" id="wageToggle" />
+        <span class="slider"></span>
+      </span>
     </label>
 
     <div id="wageFields">
       <div class="field">
-        <label for="salary">本次收入（元）</label>
-        <input type="number" id="salary" min="0" step="0.01" placeholder="如 300" />
+        <label for="salary">月薪（元）</label>
+        <input type="number" id="salary" min="0" step="0.01" placeholder="如 10000" />
       </div>
+      <div class="row">
+        <div class="field">
+          <label for="month">月份</label>
+          <input type="month" id="month" />
+        </div>
+        <div class="field">
+          <label for="workDays">本月工作天数</label>
+          <input type="number" id="workDays" min="1" max="31" step="1" />
+        </div>
+      </div>
+      <p class="tip">工作天数已按所选月份的工作日（周一~周五）自动填入，可手动改（扣除节假日 / 调休）</p>
     </div>
 
     <div class="result" id="result">
-      <div class="label">预计下班时间</div>
+      <div class="cap">预计下班时间</div>
       <div class="offtime" id="offtime">--:--</div>
       <div class="countdown" id="countdown"></div>
+      <div class="wage-line" id="dayWageLine" style="display:none;">
+        <span class="k">日薪</span>
+        <span class="v" id="dayWageValue">--</span>
+      </div>
       <div class="wage-line" id="wageLine" style="display:none;">
-        <span>时薪</span>
-        <span id="wageValue">--</span>
+        <span class="k">时薪</span>
+        <span class="v" id="wageValue">--</span>
       </div>
     </div>
     <p class="hint" id="hint">填好上班时间即可看到结果</p>
@@ -152,37 +273,88 @@
     const wageToggle = $('wageToggle');
     const wageFields = $('wageFields');
     const salaryEl = $('salary');
+    const monthEl = $('month');
+    const workDaysEl = $('workDays');
     const offtimeEl = $('offtime');
     const countdownEl = $('countdown');
+    const resultEl = $('result');
     const wageLine = $('wageLine');
     const wageValueEl = $('wageValue');
+    const dayWageLine = $('dayWageLine');
+    const dayWageValueEl = $('dayWageValue');
     const hintEl = $('hint');
 
-    let offDate = null; // 计算出的下班时刻（Date）
-
-    // 默认填入当前时间作为上班时间
     function pad(n) { return String(n).padStart(2, '0'); }
+
+    // 某月份（YYYY-MM）的工作日（周一~周五）天数
+    function weekdaysInMonth(year, month /* 1-12 */) {
+      const days = new Date(year, month, 0).getDate();
+      let count = 0;
+      for (let d = 1; d <= days; d++) {
+        const wd = new Date(year, month - 1, d).getDay(); // 0=周日, 6=周六
+        if (wd !== 0 && wd !== 6) count++;
+      }
+      return count;
+    }
+    function fillWorkDays() {
+      if (!monthEl.value) return;
+      const [y, m] = monthEl.value.split('-').map(Number);
+      workDaysEl.value = weekdaysInMonth(y, m);
+    }
+
+    // 重新触发下班时间数字的弹入动效
+    let lastOff = '';
+    function popOfftime(text) {
+      offtimeEl.innerHTML = text;
+      if (text !== lastOff) {
+        offtimeEl.classList.remove('pop');
+        void offtimeEl.offsetWidth;
+        offtimeEl.classList.add('pop');
+        lastOff = text;
+      }
+    }
+
+    // 撒花
+    function confetti() {
+      const colors = ['#0071e3', '#34c759', '#ff375f', '#ffd60a', '#5856d6', '#ff9f0a'];
+      for (let i = 0; i < 26; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti-piece';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.background = colors[i % colors.length];
+        c.style.animationDelay = (Math.random() * 0.35) + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 2300);
+      }
+    }
+
     (function initNow() {
       const now = new Date();
       startTimeEl.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      monthEl.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+      fillWorkDays();
     })();
 
     wageToggle.addEventListener('change', () => {
       wageFields.style.display = wageToggle.checked ? 'block' : 'none';
       calculate();
     });
-
-    [startTimeEl, hoursEl, salaryEl].forEach((el) =>
+    monthEl.addEventListener('change', () => { fillWorkDays(); calculate(); });
+    [startTimeEl, hoursEl, salaryEl, workDaysEl].forEach((el) =>
       el.addEventListener('input', calculate)
     );
+
+    let offDate = null;
+    let wasDone = false;
 
     function calculate() {
       const timeStr = startTimeEl.value;
       const hours = parseFloat(hoursEl.value);
 
       if (!timeStr || isNaN(hours) || hours <= 0) {
-        offtimeEl.textContent = '--:--';
+        popOfftime('--:--');
         countdownEl.textContent = '';
+        dayWageLine.style.display = 'none';
         wageLine.style.display = 'none';
         offDate = null;
         hintEl.textContent = '请填写上班时间和坐班时长';
@@ -192,27 +364,32 @@
       const [h, m] = timeStr.split(':').map(Number);
       const start = new Date();
       start.setHours(h, m, 0, 0);
-
       const off = new Date(start.getTime() + hours * 3600 * 1000);
       offDate = off;
 
-      // 跨天提示
       const crossDay = off.getDate() !== start.getDate();
-      offtimeEl.textContent =
+      popOfftime(
         `${pad(off.getHours())}:${pad(off.getMinutes())}` +
-        (crossDay ? ' （次日）' : '');
+        (crossDay ? ' <span class="next">（次日）</span>' : '')
+      );
 
-      // 时薪
+      // 时薪：月薪 ÷（本月工作天数 × 每天坐班时长）
       if (wageToggle.checked) {
         const salary = parseFloat(salaryEl.value);
-        if (!isNaN(salary) && salary > 0) {
-          const wage = salary / hours;
+        const workDays = parseFloat(workDaysEl.value);
+        if (!isNaN(salary) && salary > 0 && !isNaN(workDays) && workDays > 0) {
+          const dayWage = salary / workDays;
+          const wage = dayWage / hours;
+          dayWageValueEl.textContent = `¥ ${dayWage.toFixed(2)} / 天`;
           wageValueEl.textContent = `¥ ${wage.toFixed(2)} / 小时`;
+          dayWageLine.style.display = 'flex';
           wageLine.style.display = 'flex';
         } else {
+          dayWageLine.style.display = 'none';
           wageLine.style.display = 'none';
         }
       } else {
+        dayWageLine.style.display = 'none';
         wageLine.style.display = 'none';
       }
 
@@ -224,12 +401,16 @@
       const diff = offDate.getTime() - Date.now();
 
       if (diff <= 0) {
-        countdownEl.textContent = '🎉 已经可以下班啦！';
-        countdownEl.classList.add('done');
-        hintEl.textContent = '辛苦了，收工~';
+        countdownEl.textContent = '🎉 可以下班啦！辛苦了～';
+        countdownEl.classList.add('celebrate');
+        resultEl.classList.add('done');
+        hintEl.textContent = '收工，下班快乐 🥳';
+        if (!wasDone) { confetti(); wasDone = true; }
         return;
       }
-      countdownEl.classList.remove('done');
+      countdownEl.classList.remove('celebrate');
+      resultEl.classList.remove('done');
+      wasDone = false;
 
       const totalMin = Math.floor(diff / 60000);
       const hh = Math.floor(totalMin / 60);
