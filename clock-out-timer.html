@@ -131,6 +131,27 @@
     .stat .num { font-size: 24px; font-weight: 700; color: var(--accent); }
     .stat .lab { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
+    .fish-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .mini-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-size: 14px; font-weight: 600; font-family: inherit; color: var(--accent); background: #eef4ff; cursor: pointer; transition: transform .12s; }
+    .mini-btn:active { transform: scale(.96); }
+
+    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal.show { display: flex; animation: fadein .25s ease; }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+    .sheet { background: #fff; width: 100%; max-width: 430px; max-height: 86vh; border-radius: 26px 26px 0 0; padding: 20px 20px 32px; overflow-y: auto; animation: slideup .32s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+    .sheet-head .close { color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    .dex-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .dex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .dex-item { background: #f5f5f7; border-radius: 16px; padding: 14px 8px; text-align: center; }
+    .dex-item .de { font-size: 34px; line-height: 1.1; }
+    .dex-item .dn { font-size: 12px; margin-top: 6px; font-weight: 600; }
+    .dex-item.locked .de { filter: grayscale(1); opacity: .35; }
+    .dex-item.locked .dn { color: var(--muted); }
+    .share-card { width: 100%; border-radius: 18px; display: block; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
+    .share-tip { color: var(--muted); font-size: 13px; text-align: center; margin-top: 14px; line-height: 1.5; }
+
     .confetti-piece { position: fixed; top: -14px; width: 9px; height: 15px; border-radius: 2px; z-index: 50; pointer-events: none; animation: fall 2.1s linear forwards; }
     @keyframes fall { to { transform: translateY(106vh) rotate(560deg); opacity: .85; } }
   </style>
@@ -215,7 +236,20 @@
         <div class="stat"><div class="num" id="bestCatch" style="font-size:18px;">—</div><div class="lab">今日最佳</div></div>
       </div>
 
+      <div class="fish-actions">
+        <button class="mini-btn" id="dexBtn">📖 摸鱼图鉴</button>
+        <button class="mini-btn" id="shareBtn">📸 晒战绩</button>
+      </div>
+
       <footer>摸鱼一时爽，一直摸鱼一直爽 🐟（记得留意老板）</footer>
+    </div>
+  </div>
+
+  <!-- 图鉴 / 战绩弹层 -->
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <div class="sheet-head"><span id="sheetTitle">摸鱼图鉴</span><span class="close" id="modalClose">✕</span></div>
+      <div class="sheet-body" id="sheetBody"></div>
     </div>
   </div>
 
@@ -355,6 +389,12 @@
       fishLvEl.textContent = levelName(fish.today);
     }
 
+    // 图鉴（全部时间收集，跨天保留）
+    const DEX_KEY = 'fish_dex';
+    let dex = {};
+    try { dex = JSON.parse(localStorage.getItem(DEX_KEY) || '{}'); } catch (e) { dex = {}; }
+    function saveDex() { try { localStorage.setItem(DEX_KEY, JSON.stringify(dex)); } catch (e) {} }
+
     /* --- 画面：鱼塘 --- */
     let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
     const swimmers = [];
@@ -452,6 +492,7 @@
     function reelIn() {
       const c = pickCatch();
       fish.today++;
+      dex[c.n] = (dex[c.n] || 0) + 1; saveDex();
       if (c.rank > fish.bestRank) { fish.bestRank = c.rank; fish.best = c.e + ' ' + c.n; }
       save(); renderStats();
       // 弹出动画
@@ -473,6 +514,54 @@
         catchBanner.innerHTML = '<span class="em">🫧</span><span><span class="nm">空军了</span><br><span class="ds">心急钓不到鱼，沉住气~</span></span>';
       }
     });
+
+    /* --- 图鉴 / 晒战绩弹层 --- */
+    const modal = $('modal'), sheetTitle = $('sheetTitle'), sheetBody = $('sheetBody'), modalClose = $('modalClose');
+    function openModal(title) { sheetTitle.textContent = title; modal.classList.add('show'); }
+    function closeModal() { modal.classList.remove('show'); }
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    $('dexBtn').addEventListener('click', () => {
+      const got = CATCHES.filter((c) => dex[c.n]).length;
+      let html = `<div class="dex-sub">已解锁 ${got}/${CATCHES.length} 种 · 钓到新鱼种自动收录，集齐成为鱼塘承包商 🏆</div><div class="dex-grid">`;
+      for (const c of CATCHES) {
+        const has = dex[c.n];
+        html += `<div class="dex-item ${has ? '' : 'locked'}"><div class="de">${has ? c.e : '❓'}</div><div class="dn">${has ? c.n : '未解锁'}</div>${has ? `<div class="dn" style="color:var(--muted);font-weight:400;">钓到 ×${dex[c.n]}</div>` : ''}</div>`;
+      }
+      html += '</div>';
+      sheetBody.innerHTML = html;
+      openModal('📖 摸鱼图鉴');
+    });
+
+    $('shareBtn').addEventListener('click', () => {
+      const url = buildShareImage();
+      sheetBody.innerHTML = `<img class="share-card" src="${url}" alt="今日摸鱼战绩" /><div class="share-tip">长按上图保存到相册，再发朋友圈 / 微信群晒战绩 🎣</div>`;
+      openModal('📸 今日摸鱼战绩');
+    });
+
+    function roundRect(c, x, y, w, h, r) {
+      c.beginPath(); c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+    }
+    function buildShareImage() {
+      const w = 600, h = 820, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const x = cv.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#cdeafe'); g.addColorStop(1, '#a5c8ff');
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      roundRect(x, 44, 80, w - 88, h - 170, 34); x.fillStyle = 'rgba(255,255,255,.94)'; x.fill();
+      x.textAlign = 'center';
+      x.fillStyle = '#1d1d1f'; x.font = 'bold 48px sans-serif'; x.fillText('🎣 今日摸鱼战绩', w / 2, 185);
+      x.fillStyle = '#86868b'; x.font = '24px sans-serif'; x.fillText(new Date().toLocaleDateString('zh-CN'), w / 2, 230);
+      x.fillStyle = '#34c759'; x.font = 'bold 36px sans-serif'; x.fillText(levelName(fish.today), w / 2, 308);
+      x.fillStyle = '#0071e3'; x.font = 'bold 140px sans-serif'; x.fillText(String(fish.today), w / 2, 470);
+      x.fillStyle = '#86868b'; x.font = '28px sans-serif'; x.fillText('条渔获', w / 2, 515);
+      x.fillStyle = '#1d1d1f'; x.font = '30px sans-serif'; x.fillText('今日最佳：' + (fish.best || '暂无'), w / 2, 600);
+      x.fillStyle = '#86868b'; x.font = '24px sans-serif'; x.fillText('带薪摸鱼，快乐工作 🐟', w / 2, 670);
+      x.fillStyle = '#b0b0b5'; x.font = '22px sans-serif'; x.fillText('—— 摸鱼计时器 ——', w / 2, h - 55);
+      return cv.toDataURL('image/png');
+    }
 
     fishToggle.addEventListener('change', () => {
       if (fishToggle.checked) {
