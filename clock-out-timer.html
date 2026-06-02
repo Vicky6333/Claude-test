@@ -126,13 +126,23 @@
     .act-btn.waiting { background: linear-gradient(135deg, #8e8e93, #aeaeb2); box-shadow: none; }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
     .catch-banner {
-      margin-top: 12px; padding: 12px 14px; border-radius: 14px; font-size: 14px;
-      background: #f5f5f7; display: flex; align-items: center; gap: 10px; min-height: 48px;
-      transition: background .3s; line-height: 1.4;
+      position: relative; margin-top: 12px; padding: 12px 14px 12px 18px; border-radius: 14px; font-size: 14px;
+      background: #f5f5f7; display: flex; align-items: center; gap: 11px; min-height: 54px; overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, .04); transition: background .3s, border-color .3s; line-height: 1.4;
     }
-    .catch-banner .em { font-size: 28px; }
+    .catch-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rk, #d2d2d7); }
+    .catch-banner .em { font-size: 30px; flex-shrink: 0; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .14)); }
+    .catch-banner .meta { flex: 1; min-width: 0; }
     .catch-banner .nm { font-weight: 700; }
     .catch-banner .ds { color: var(--muted); font-size: 12.5px; }
+    .catch-banner .tag { display: inline-block; font-size: 10.5px; font-weight: 700; color: #fff; padding: 2px 8px; border-radius: 20px; margin-left: 7px; vertical-align: 1px; background: var(--rk, #aaa); }
+    .catch-banner.r0 { --rk: #b0b3b8; background: #f3f4f6; }
+    .catch-banner.r1 { --rk: #34c759; background: #eefaf0; }
+    .catch-banner.r2 { --rk: #0a84ff; background: #eaf4ff; }
+    .catch-banner.r3 { --rk: #f5a623; background: #fff7e6; }
+    .catch-banner.r4 { --rk: #a855f7; background: linear-gradient(135deg, #f7edff, #ffeef6); }
+    .catch-banner.info { --rk: #5aa9ff; background: #eef6ff; }
+    .catch-banner.miss { --rk: #c2c2c7; background: #f3f3f3; }
     .stats { display: flex; gap: 10px; margin-top: 12px; }
     .stat { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px; text-align: center; }
     .stat .num { font-size: 24px; font-weight: 700; color: var(--accent); }
@@ -141,6 +151,16 @@
     .fish-bar { display: flex; align-items: center; gap: 14px; font-size: 13px; color: #555; margin-bottom: 12px; }
     .fish-bar b { color: var(--text); }
     .fish-bar .shop { flex: 0 0 auto; margin-left: auto; padding: 6px 12px; font-size: 13px; }
+    .shop-wallet { display: flex; gap: 10px; margin-bottom: 16px; }
+    .shop-chip { flex: 1; background: linear-gradient(135deg, #fff7e0, #ffeccc); border: 1px solid #ffe0a3; border-radius: 16px; padding: 12px 14px; }
+    .shop-chip.rod { background: linear-gradient(135deg, #eef4ff, #f3edff); border-color: #dde3ff; }
+    .shop-chip .cl { font-size: 11.5px; color: var(--muted); font-weight: 500; }
+    .shop-chip .cv { font-size: 22px; font-weight: 800; margin-top: 3px; }
+    .rod-card { background: linear-gradient(135deg, #f3f7ff, #faf3ff); border: 1px solid #e6e9f5; border-radius: 18px; padding: 16px; }
+    .rod-dots { display: flex; gap: 6px; margin: 2px 0 4px; }
+    .rod-dots i { flex: 1; height: 7px; border-radius: 6px; background: #e1e4ef; }
+    .rod-dots i.on { background: linear-gradient(90deg, #5aa9ff, #7c5cf0); }
+    .shop-title { font-size: 14px; font-weight: 700; margin: 22px 0 10px; }
     .scene-row { display: flex; gap: 10px; margin-top: 4px; }
     .scene-item { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px 6px; text-align: center; font-size: 26px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s, background .15s; }
     .scene-item div { font-size: 12px; margin-top: 4px; color: #555; }
@@ -158,10 +178,12 @@
     .sheet-head .close { color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px; }
     .dex-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
     .dex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .dex-item { background: #f5f5f7; border-radius: 16px; padding: 14px 8px; text-align: center; }
-    .dex-item .de { font-size: 34px; line-height: 1.1; }
+    .dex-item { position: relative; background: #fff; border: 1.5px solid #ececf0; border-radius: 16px; padding: 15px 8px 12px; text-align: center; }
+    .dex-item .de { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .1)); }
     .dex-item .dn { font-size: 12px; margin-top: 6px; font-weight: 600; }
-    .dex-item.locked .de { filter: grayscale(1); opacity: .35; }
+    .dex-item .rk { display: inline-block; margin-top: 6px; font-size: 9.5px; font-weight: 700; color: #fff; padding: 1px 8px; border-radius: 10px; background: var(--rk, #bbb); }
+    .dex-item.locked { background: #f3f3f5; border-color: #ececf0; }
+    .dex-item.locked .de { filter: grayscale(1); opacity: .3; }
     .dex-item.locked .dn { color: var(--muted); }
     .share-card { width: 100%; border-radius: 18px; display: block; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
     .share-tip { color: var(--muted); font-size: 13px; text-align: center; margin-top: 14px; line-height: 1.5; }
@@ -310,9 +332,9 @@
 
       <button class="act-btn" id="actBtn">🎣 抛竿</button>
 
-      <div class="catch-banner" id="catchBanner">
+      <div class="catch-banner info" id="catchBanner">
         <span class="em">🐟</span>
-        <span><span class="nm">点「抛竿」开始摸鱼</span><br><span class="ds">趁老板不在，钓一会儿~</span></span>
+        <span class="meta"><span class="nm">点「抛竿」开始摸鱼</span><br><span class="ds">趁老板不在，钓一会儿~</span></span>
       </div>
 
       <div class="stats">
@@ -505,6 +527,8 @@
     let rod = +(localStorage.getItem('fish_rod') || 1);
     let scene = +(localStorage.getItem('fish_scene') || 0);
     function saveProg() { try { localStorage.setItem('fish_coins', coins); localStorage.setItem('fish_rod', rod); localStorage.setItem('fish_scene', scene); } catch (e) {} }
+    const RANK_TAG = ['普通', '常见', '优秀', '稀有', '传说']; // 稀有度标签
+    const RANK_COLOR = ['#b0b3b8', '#34c759', '#0a84ff', '#f5a623', '#a855f7'];
     const COIN_BY_RANK = [1, 2, 5, 15, 50];       // 各稀有度的收益
     const ROD_COST = [0, 0, 60, 180, 450, 1100];  // 升到 Lv.2~5 的花费
     const SCENES = [
@@ -710,8 +734,8 @@
       stats.casts++; saveStats();
       state = 'waiting'; bobX = W * (0.3 + Math.random() * 0.4); bobDip = 0;
       setBtn('⏳ 等鱼上钩…（别急）', 'waiting');
-      catchBanner.style.background = '#eef6ff';
-      catchBanner.innerHTML = '<span class="em">🎣</span><span><span class="nm">已抛竿</span><br><span class="ds">静静等浮漂动…</span></span>';
+      catchBanner.className = 'catch-banner info';
+      catchBanner.innerHTML = '<span class="em">🎣</span><span class="meta"><span class="nm">已抛竿</span><br><span class="ds">静静等浮漂动…</span></span>';
       const delay = 1500 + Math.random() * 4000;
       biteTimer = setTimeout(onBite, delay);
     }
@@ -723,8 +747,8 @@
       escapeTimer = setTimeout(() => {
         stats.escaped++; saveStats();
         state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
-        catchBanner.style.background = '#f3f3f3';
-        catchBanner.innerHTML = '<span class="em">💨</span><span><span class="nm">跑啦…</span><br><span class="ds">手慢了，鱼溜了，再来一竿！</span></span>';
+        catchBanner.className = 'catch-banner miss';
+        catchBanner.innerHTML = '<span class="em">💨</span><span class="meta"><span class="nm">跑啦…</span><br><span class="ds">手慢了，鱼溜了，再来一竿！</span></span>';
       }, 1100);
     }
     // 记账：被主动钓 / 挂机 / 离线共用
@@ -750,8 +774,8 @@
       void catchPop.offsetWidth; catchPop.classList.add('show');
       if (c.rank >= 3) { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); confetti(); }
       if (navigator.vibrate) navigator.vibrate(c.rank >= 3 ? [40, 50, 40, 50, 60] : [30, 40, 30]);
-      catchBanner.style.background = c.c;
-      catchBanner.innerHTML = `<span class="em">${c.e}</span><span><span class="nm">钓到了：${c.n}${c.rank >= 4 ? '　🏆传说！' : c.rank >= 3 ? '　✨稀有！' : ''}</span><br><span class="ds">${c.ds}</span></span>`;
+      catchBanner.className = 'catch-banner r' + c.rank;
+      catchBanner.innerHTML = `<span class="em">${c.e}</span><span class="meta"><span class="nm">${c.n}<span class="tag">${RANK_TAG[c.rank]}</span></span><br><span class="ds">${c.ds}</span></span>`;
       buddyReact(c);
     }
 
@@ -763,8 +787,8 @@
         // 心急空军
         clearTimeout(biteTimer); stats.early++; saveStats();
         state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
-        catchBanner.style.background = '#f3f3f3';
-        catchBanner.innerHTML = '<span class="em">🫧</span><span><span class="nm">空军了</span><br><span class="ds">心急钓不到鱼，沉住气~</span></span>';
+        catchBanner.className = 'catch-banner miss';
+        catchBanner.innerHTML = '<span class="em">🫧</span><span class="meta"><span class="nm">空军了</span><br><span class="ds">心急钓不到鱼，沉住气~</span></span>';
       }
     });
 
@@ -779,8 +803,8 @@
       const got = CATCHES.filter((c) => dex[c.n]).length;
       let html = `<div class="dex-sub">已解锁 ${got}/${CATCHES.length} 种 · 钓到新鱼种自动收录，集齐成为鱼塘承包商 🏆</div><div class="dex-grid">`;
       for (const c of CATCHES) {
-        const has = dex[c.n];
-        html += `<div class="dex-item ${has ? '' : 'locked'}"><div class="de">${has ? c.e : '❓'}</div><div class="dn">${has ? c.n : '未解锁'}</div>${has ? `<div class="dn" style="color:var(--muted);font-weight:400;">钓到 ×${dex[c.n]}</div>` : ''}</div>`;
+        const has = dex[c.n]; const rc = RANK_COLOR[c.rank];
+        html += `<div class="dex-item ${has ? '' : 'locked'}"${has ? ` style="--rk:${rc};border-color:${rc}55;"` : ''}><div class="de">${has ? c.e : '❓'}</div><div class="dn">${has ? c.n : '未解锁'}</div>${has ? `<div class="rk">${RANK_TAG[c.rank]}</div><div class="dn" style="color:var(--muted);font-weight:400;margin-top:4px;">×${dex[c.n]}</div>` : ''}</div>`;
       }
       html += '</div>';
       sheetBody.innerHTML = html;
@@ -923,16 +947,21 @@
 
     /* ===== 摸鱼商店：鱼竿升级 + 场景切换 ===== */
     function renderShop() {
-      let html = `<div class="rep-sub">🪙 摸鱼币 <b>${coins}</b>　·　🎣 鱼竿 Lv.<b>${rod}</b>（钓得多攒币，升级提升稀有率 + 挂机更快）</div>`;
+      let html = `<div class="shop-wallet">
+        <div class="shop-chip"><div class="cl">摸鱼币</div><div class="cv">🪙 ${coins}</div></div>
+        <div class="shop-chip rod"><div class="cl">鱼竿等级</div><div class="cv">🎣 Lv.${rod}</div></div>
+      </div>`;
+      html += `<div class="rod-card"><div class="rod-dots">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= rod ? 'on' : ''}"></i>`).join('')}</div>`;
       if (rod >= 5) {
-        html += `<div class="rep-line"><span class="ic">🎣</span><span>鱼竿已满级 Lv.5，稀有率与挂机速度拉满！🏆</span></div>`;
+        html += `<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5;">鱼竿已满级 <b style="color:var(--text)">Lv.5</b> — 稀有率与挂机速度拉满！🏆</div>`;
       } else {
         const cost = ROD_COST[rod + 1];
         const ok = coins >= cost;
-        html += `<div class="rep-line"><span class="ic">🎣</span><span>升级到 <b>Lv.${rod + 1}</b>：稀有率更高、挂机更快</span></div>`;
-        html += `<button class="act-btn" id="rodUp" ${ok ? '' : 'disabled'} style="margin-top:10px;${ok ? '' : 'opacity:.5;'}">${ok ? `🔨 升级鱼竿（-🪙${cost}）` : `🪙 还差 ${cost - coins} 币`}</button>`;
+        html += `<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5;">升到 <b style="color:var(--text)">Lv.${rod + 1}</b>：抛竿命中更多稀有鱼，挂机更快</div>`;
+        html += `<button class="act-btn" id="rodUp" ${ok ? '' : 'disabled'} style="margin-top:13px;${ok ? '' : 'opacity:.5;'}">${ok ? `🔨 升级鱼竿　-🪙${cost}` : `🪙 还差 ${cost - coins} 币`}</button>`;
       }
-      html += `<div class="rep-sub" style="margin-top:20px;">🏞️ 选择鱼塘场景</div><div class="scene-row">`;
+      html += `</div>`;
+      html += `<div class="shop-title">🏞️ 鱼塘场景</div><div class="scene-row">`;
       SCENES.forEach((s, i) => { html += `<div class="scene-item ${i === scene ? 'on' : ''}" data-s="${i}">${s.emoji}<div>${s.name}</div></div>`; });
       html += `</div>`;
       sheetBody.innerHTML = html;
