@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>下钟计时器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>摸鱼计时器 · 打工人的带薪摸鱼时间</title>
   <style>
     :root {
       --text: #1d1d1f;
@@ -19,312 +19,238 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 24px;
-      overflow: hidden;
+      padding: 24px 16px 40px;
       background: linear-gradient(160deg, #e9f0ff 0%, #f5f5f7 45%, #ffeef5 100%);
     }
-    /* 背景柔光球，毛玻璃卡片透出来更有苹果味 */
-    .blob {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(70px);
-      opacity: .55;
-      z-index: 0;
-      animation: float 14s ease-in-out infinite;
-    }
-    .blob.b1 { width: 360px; height: 360px; background: #a5c8ff; top: -80px; left: -60px; }
-    .blob.b2 { width: 320px; height: 320px; background: #ffc0dd; bottom: -90px; right: -50px; animation-delay: -5s; }
-    .blob.b3 { width: 260px; height: 260px; background: #c9b8ff; bottom: 40px; left: -70px; animation-delay: -9s; }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-26px) scale(1.06); }
-    }
+    .app { width: 100%; max-width: 430px; }
 
     .card {
       position: relative;
-      z-index: 1;
-      background: rgba(255, 255, 255, .72);
+      background: rgba(255, 255, 255, .8);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
       border-radius: 28px;
-      padding: 30px 28px;
-      width: 100%;
-      max-width: 430px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .04);
+      padding: 28px 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .1), 0 2px 8px rgba(0, 0, 0, .04);
       border: 1px solid rgba(255, 255, 255, .6);
       animation: pop-in .55s cubic-bezier(.16, 1, .3, 1);
     }
+    .card + .card { margin-top: 18px; }
     @keyframes pop-in {
       from { opacity: 0; transform: translateY(18px) scale(.97); }
       to { opacity: 1; transform: none; }
     }
 
-    h1 {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -.5px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .clock {
-      display: inline-block;
-      font-size: 28px;
-      transform-origin: 50% 58%;
-      animation: tick 2.2s ease-in-out infinite;
-    }
-    @keyframes tick {
-      0%, 100% { transform: rotate(-9deg); }
-      50% { transform: rotate(9deg); }
-    }
-    .subtitle { color: var(--muted); font-size: 14px; margin: 6px 0 24px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -.5px; display: flex; align-items: center; gap: 9px; }
+    .rod { display: inline-block; font-size: 28px; transform-origin: 70% 70%; animation: cast 3s ease-in-out infinite; }
+    @keyframes cast { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+    .subtitle { color: var(--muted); font-size: 13.5px; margin: 7px 0 22px; line-height: 1.5; }
 
     .field { margin-bottom: 16px; }
     label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500; }
     input[type="time"], input[type="number"], input[type="month"] {
-      width: 100%;
-      padding: 13px 15px;
-      border-radius: 13px;
-      border: 1.5px solid transparent;
-      background: var(--field);
-      color: var(--text);
-      font-size: 16px;
-      font-family: inherit;
-      outline: none;
+      width: 100%; padding: 13px 15px; border-radius: 13px; border: 1.5px solid transparent;
+      background: var(--field); color: var(--text); font-size: 16px; font-family: inherit; outline: none;
       transition: border-color .2s, box-shadow .2s, background .2s;
     }
-    input:focus {
-      border-color: var(--accent);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(0, 113, 227, .14);
-    }
+    input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(0, 113, 227, .14); }
     .row { display: flex; gap: 12px; }
     .row .field { flex: 1; }
 
-    /* iOS 风格开关 */
-    .toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 15px;
-      font-weight: 500;
-      margin: 6px 0 18px;
-      user-select: none;
-    }
+    .toggle { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 500; margin: 6px 0 16px; user-select: none; }
     .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; inset: 0; cursor: pointer;
-      background: #e9e9ea; border-radius: 31px;
-      transition: background .3s;
-    }
-    .slider::before {
-      content: ""; position: absolute;
-      height: 27px; width: 27px; left: 2px; top: 2px;
-      background: #fff; border-radius: 50%;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
-      transition: transform .28s cubic-bezier(.16, 1, .3, 1);
-    }
+    .slider { position: absolute; inset: 0; cursor: pointer; background: #e9e9ea; border-radius: 31px; transition: background .3s; }
+    .slider::before { content: ""; position: absolute; height: 27px; width: 27px; left: 2px; top: 2px; background: #fff; border-radius: 50%; box-shadow: 0 2px 5px rgba(0, 0, 0, .25); transition: transform .28s cubic-bezier(.16, 1, .3, 1); }
     .switch input:checked + .slider { background: var(--green); }
     .switch input:checked + .slider::before { transform: translateX(20px); }
 
     #wageFields { display: none; animation: pop-in .35s ease; }
+    .tip { color: var(--muted); font-size: 12px; line-height: 1.5; margin: -6px 0 4px; }
 
     .result {
-      margin-top: 4px;
-      padding: 22px;
-      border-radius: 22px;
+      margin-top: 4px; padding: 22px; border-radius: 22px; text-align: center;
       background: linear-gradient(135deg, rgba(0, 113, 227, .09), rgba(88, 86, 214, .07));
-      border: 1px solid rgba(0, 113, 227, .16);
-      text-align: center;
-      transition: background .4s, border-color .4s;
+      border: 1px solid rgba(0, 113, 227, .16); transition: background .4s, border-color .4s;
     }
-    .result.done {
-      background: linear-gradient(135deg, rgba(52, 199, 89, .14), rgba(48, 209, 88, .08));
-      border-color: rgba(52, 199, 89, .3);
-    }
+    .result.done { background: linear-gradient(135deg, rgba(52, 199, 89, .14), rgba(48, 209, 88, .08)); border-color: rgba(52, 199, 89, .3); }
     .result .cap { font-size: 13px; color: var(--muted); font-weight: 500; }
-    .offtime {
-      font-size: 44px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      color: var(--accent);
-      margin: 6px 0 2px;
-      transition: color .4s;
-    }
+    .offtime { font-size: 44px; font-weight: 700; letter-spacing: -1px; color: var(--accent); margin: 6px 0 2px; transition: color .4s; }
     .result.done .offtime { color: var(--green); }
     .offtime.pop { animation: numpop .42s cubic-bezier(.16, 1, .3, 1); }
-    @keyframes numpop {
-      0% { transform: scale(.78); opacity: .5; }
-      60% { transform: scale(1.04); }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    @keyframes numpop { 0% { transform: scale(.78); opacity: .5; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
     .offtime .next { font-size: 15px; color: var(--muted); font-weight: 500; }
-
     .countdown { font-size: 15px; color: var(--accent); margin-top: 6px; font-weight: 500; }
-    .countdown.celebrate {
-      color: var(--green);
-      font-weight: 600;
-      font-size: 17px;
-      animation: bounce .6s ease infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-7px); }
-    }
-
-    .wage-line {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed rgba(0, 0, 0, .12);
-      font-size: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
+    .countdown.celebrate { color: var(--green); font-weight: 600; font-size: 17px; animation: bounce .6s ease infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    .wage-line { margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(0, 0, 0, .12); font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; }
     .wage-line .k { color: var(--muted); font-weight: 500; }
     .wage-line .v { color: var(--accent); font-weight: 700; font-size: 16px; }
-
     .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 12px; }
-    .tip { color: var(--muted); font-size: 12px; line-height: 1.5; text-align: left; margin: -6px 0 4px; }
-    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 16px; }
 
-    /* 撒花 */
-    .confetti-piece {
-      position: fixed; top: -14px; width: 9px; height: 15px;
-      border-radius: 2px; z-index: 50; pointer-events: none;
-      animation: fall 2.1s linear forwards;
+    /* ===== 摸鱼模式 ===== */
+    .fish-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .fish-head .t { font-size: 19px; font-weight: 700; }
+    .fish-head .lv { font-size: 12px; color: #fff; background: linear-gradient(135deg, #34c759, #30b8d6); padding: 4px 11px; border-radius: 20px; font-weight: 600; }
+    .pond-wrap { position: relative; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 12px rgba(0, 0, 0, .12); }
+    #pond { display: block; width: 100%; height: 210px; }
+    .catch-pop {
+      position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(.4);
+      font-size: 60px; opacity: 0; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
     }
-    @keyframes fall {
-      to { transform: translateY(106vh) rotate(560deg); opacity: .85; }
+    .catch-pop.show { animation: catchpop 1.3s ease forwards; }
+    @keyframes catchpop {
+      0% { opacity: 0; transform: translate(-50%, -10%) scale(.3); }
+      25% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
+      70% { opacity: 1; transform: translate(-50%, -70%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -120%) scale(.9); }
     }
+    .act-btn {
+      width: 100%; margin-top: 14px; padding: 16px; border: none; border-radius: 16px;
+      font-size: 18px; font-weight: 700; font-family: inherit; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, #0071e3, #5856d6); transition: transform .12s, box-shadow .2s, background .25s;
+      box-shadow: 0 8px 22px rgba(0, 113, 227, .3);
+    }
+    .act-btn:active { transform: scale(.96); }
+    .act-btn.bite { background: linear-gradient(135deg, #ff9f0a, #ff375f); box-shadow: 0 8px 22px rgba(255, 55, 95, .4); animation: shake .35s ease infinite; }
+    .act-btn.waiting { background: linear-gradient(135deg, #8e8e93, #aeaeb2); box-shadow: none; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .catch-banner {
+      margin-top: 12px; padding: 12px 14px; border-radius: 14px; font-size: 14px;
+      background: #f5f5f7; display: flex; align-items: center; gap: 10px; min-height: 48px;
+      transition: background .3s; line-height: 1.4;
+    }
+    .catch-banner .em { font-size: 28px; }
+    .catch-banner .nm { font-weight: 700; }
+    .catch-banner .ds { color: var(--muted); font-size: 12.5px; }
+    .stats { display: flex; gap: 10px; margin-top: 12px; }
+    .stat { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px; text-align: center; }
+    .stat .num { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .stat .lab { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+    .confetti-piece { position: fixed; top: -14px; width: 9px; height: 15px; border-radius: 2px; z-index: 50; pointer-events: none; animation: fall 2.1s linear forwards; }
+    @keyframes fall { to { transform: translateY(106vh) rotate(560deg); opacity: .85; } }
   </style>
 </head>
 <body>
-  <div class="blob b1"></div>
-  <div class="blob b2"></div>
-  <div class="blob b3"></div>
+  <div class="app">
+    <!-- 计时卡片 -->
+    <div class="card">
+      <h1><span class="rod">🎣</span> 摸鱼计时器</h1>
+      <p class="subtitle">打工人的带薪摸鱼时间 —— 先算好几点能下班，再安心钓一会儿 🐟</p>
 
-  <div class="card">
-    <h1><span class="clock">⏰</span> 下钟计时器</h1>
-    <p class="subtitle">输入上班时间和坐班时长，自动算出下班时间</p>
-
-    <div class="row">
-      <div class="field">
-        <label for="startTime">上班时间</label>
-        <input type="time" id="startTime" />
-      </div>
-      <div class="field">
-        <label for="hours">坐班时长（小时）</label>
-        <input type="number" id="hours" min="0" step="0.5" placeholder="如 8" value="8" />
-      </div>
-    </div>
-
-    <label class="toggle">
-      <span>算一算时薪 💰</span>
-      <span class="switch">
-        <input type="checkbox" id="wageToggle" />
-        <span class="slider"></span>
-      </span>
-    </label>
-
-    <div id="wageFields">
-      <div class="field">
-        <label for="salary">月薪（元）</label>
-        <input type="number" id="salary" min="0" step="0.01" placeholder="如 10000" />
-      </div>
       <div class="row">
         <div class="field">
-          <label for="month">月份</label>
-          <input type="month" id="month" />
+          <label for="startTime">上班时间</label>
+          <input type="time" id="startTime" />
         </div>
         <div class="field">
-          <label for="workDays">本月工作天数</label>
-          <input type="number" id="workDays" min="1" max="31" step="1" />
+          <label for="hours">坐班时长（小时）</label>
+          <input type="number" id="hours" min="0" step="0.5" placeholder="如 8" value="8" />
         </div>
       </div>
-      <p class="tip">工作天数已按所选月份的工作日（周一~周五）自动填入，可手动改（扣除节假日 / 调休）</p>
+
+      <label class="toggle">
+        <span>算一算时薪 💰</span>
+        <span class="switch"><input type="checkbox" id="wageToggle" /><span class="slider"></span></span>
+      </label>
+
+      <div id="wageFields">
+        <div class="field">
+          <label for="salary">月薪（元）</label>
+          <input type="number" id="salary" min="0" step="0.01" placeholder="如 10000" />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="month">月份</label>
+            <input type="month" id="month" />
+          </div>
+          <div class="field">
+            <label for="workDays">本月工作天数</label>
+            <input type="number" id="workDays" min="1" max="31" step="1" />
+          </div>
+        </div>
+        <p class="tip">工作天数已按所选月份的工作日（周一~周五）自动填入，可手动改（扣除节假日 / 调休）</p>
+      </div>
+
+      <div class="result" id="result">
+        <div class="cap">预计下班（收工）时间</div>
+        <div class="offtime" id="offtime">--:--</div>
+        <div class="countdown" id="countdown"></div>
+        <div class="wage-line" id="dayWageLine" style="display:none;"><span class="k">日薪</span><span class="v" id="dayWageValue">--</span></div>
+        <div class="wage-line" id="wageLine" style="display:none;"><span class="k">时薪</span><span class="v" id="wageValue">--</span></div>
+      </div>
+      <p class="hint" id="hint">填好上班时间即可看到结果</p>
+
+      <label class="toggle" style="margin:18px 0 0;">
+        <span>🐟 摸鱼模式（边等下班边钓鱼）</span>
+        <span class="switch"><input type="checkbox" id="fishToggle" /><span class="slider"></span></span>
+      </label>
     </div>
 
-    <div class="result" id="result">
-      <div class="cap">预计下班时间</div>
-      <div class="offtime" id="offtime">--:--</div>
-      <div class="countdown" id="countdown"></div>
-      <div class="wage-line" id="dayWageLine" style="display:none;">
-        <span class="k">日薪</span>
-        <span class="v" id="dayWageValue">--</span>
+    <!-- 摸鱼（钓鱼）卡片 -->
+    <div class="card" id="fishCard" style="display:none;">
+      <div class="fish-head">
+        <span class="t">🎣 带薪钓鱼</span>
+        <span class="lv" id="fishLv">摸鱼新手</span>
       </div>
-      <div class="wage-line" id="wageLine" style="display:none;">
-        <span class="k">时薪</span>
-        <span class="v" id="wageValue">--</span>
-      </div>
-    </div>
-    <p class="hint" id="hint">填好上班时间即可看到结果</p>
 
-    <footer>下班快乐 🎉</footer>
+      <div class="pond-wrap">
+        <canvas id="pond"></canvas>
+        <div class="catch-pop" id="catchPop"></div>
+      </div>
+
+      <button class="act-btn" id="actBtn">🎣 抛竿</button>
+
+      <div class="catch-banner" id="catchBanner">
+        <span class="em">🐟</span>
+        <span><span class="nm">点「抛竿」开始摸鱼</span><br><span class="ds">趁老板不在，钓一会儿~</span></span>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="num" id="todayCatch">0</div><div class="lab">今日渔获（条）</div></div>
+        <div class="stat"><div class="num" id="bestCatch" style="font-size:18px;">—</div><div class="lab">今日最佳</div></div>
+      </div>
+
+      <footer>摸鱼一时爽，一直摸鱼一直爽 🐟（记得留意老板）</footer>
+    </div>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const startTimeEl = $('startTime');
-    const hoursEl = $('hours');
-    const wageToggle = $('wageToggle');
-    const wageFields = $('wageFields');
-    const salaryEl = $('salary');
-    const monthEl = $('month');
-    const workDaysEl = $('workDays');
-    const offtimeEl = $('offtime');
-    const countdownEl = $('countdown');
-    const resultEl = $('result');
-    const wageLine = $('wageLine');
-    const wageValueEl = $('wageValue');
-    const dayWageLine = $('dayWageLine');
-    const dayWageValueEl = $('dayWageValue');
-    const hintEl = $('hint');
-
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // 某月份（YYYY-MM）的工作日（周一~周五）天数
-    function weekdaysInMonth(year, month /* 1-12 */) {
-      const days = new Date(year, month, 0).getDate();
-      let count = 0;
-      for (let d = 1; d <= days; d++) {
-        const wd = new Date(year, month - 1, d).getDay(); // 0=周日, 6=周六
-        if (wd !== 0 && wd !== 6) count++;
-      }
-      return count;
-    }
-    function fillWorkDays() {
-      if (!monthEl.value) return;
-      const [y, m] = monthEl.value.split('-').map(Number);
-      workDaysEl.value = weekdaysInMonth(y, m);
-    }
+    /* ============ 计时 / 时薪 ============ */
+    const startTimeEl = $('startTime'), hoursEl = $('hours');
+    const wageToggle = $('wageToggle'), wageFields = $('wageFields');
+    const salaryEl = $('salary'), monthEl = $('month'), workDaysEl = $('workDays');
+    const offtimeEl = $('offtime'), countdownEl = $('countdown'), resultEl = $('result');
+    const wageLine = $('wageLine'), wageValueEl = $('wageValue');
+    const dayWageLine = $('dayWageLine'), dayWageValueEl = $('dayWageValue');
+    const hintEl = $('hint');
 
-    // 重新触发下班时间数字的弹入动效
+    function weekdaysInMonth(y, m) {
+      const days = new Date(y, m, 0).getDate(); let c = 0;
+      for (let d = 1; d <= days; d++) { const wd = new Date(y, m - 1, d).getDay(); if (wd !== 0 && wd !== 6) c++; }
+      return c;
+    }
+    function fillWorkDays() { if (!monthEl.value) return; const [y, m] = monthEl.value.split('-').map(Number); workDaysEl.value = weekdaysInMonth(y, m); }
+
     let lastOff = '';
-    function popOfftime(text) {
-      offtimeEl.innerHTML = text;
-      if (text !== lastOff) {
-        offtimeEl.classList.remove('pop');
-        void offtimeEl.offsetWidth;
-        offtimeEl.classList.add('pop');
-        lastOff = text;
-      }
+    function popOfftime(t) {
+      offtimeEl.innerHTML = t;
+      if (t !== lastOff) { offtimeEl.classList.remove('pop'); void offtimeEl.offsetWidth; offtimeEl.classList.add('pop'); lastOff = t; }
     }
-
-    // 撒花
     function confetti() {
       const colors = ['#0071e3', '#34c759', '#ff375f', '#ffd60a', '#5856d6', '#ff9f0a'];
       for (let i = 0; i < 26; i++) {
-        const c = document.createElement('div');
-        c.className = 'confetti-piece';
-        c.style.left = Math.random() * 100 + 'vw';
-        c.style.background = colors[i % colors.length];
+        const c = document.createElement('div'); c.className = 'confetti-piece';
+        c.style.left = Math.random() * 100 + 'vw'; c.style.background = colors[i % colors.length];
         c.style.animationDelay = (Math.random() * 0.35) + 's';
-        document.body.appendChild(c);
-        setTimeout(() => c.remove(), 2300);
+        document.body.appendChild(c); setTimeout(() => c.remove(), 2300);
       }
     }
 
@@ -335,96 +261,233 @@
       fillWorkDays();
     })();
 
-    wageToggle.addEventListener('change', () => {
-      wageFields.style.display = wageToggle.checked ? 'block' : 'none';
-      calculate();
-    });
+    wageToggle.addEventListener('change', () => { wageFields.style.display = wageToggle.checked ? 'block' : 'none'; calculate(); });
     monthEl.addEventListener('change', () => { fillWorkDays(); calculate(); });
-    [startTimeEl, hoursEl, salaryEl, workDaysEl].forEach((el) =>
-      el.addEventListener('input', calculate)
-    );
+    [startTimeEl, hoursEl, salaryEl, workDaysEl].forEach((el) => el.addEventListener('input', calculate));
 
-    let offDate = null;
-    let wasDone = false;
-
+    let offDate = null, wasDone = false;
     function calculate() {
-      const timeStr = startTimeEl.value;
-      const hours = parseFloat(hoursEl.value);
-
+      const timeStr = startTimeEl.value, hours = parseFloat(hoursEl.value);
       if (!timeStr || isNaN(hours) || hours <= 0) {
-        popOfftime('--:--');
-        countdownEl.textContent = '';
-        dayWageLine.style.display = 'none';
-        wageLine.style.display = 'none';
-        offDate = null;
-        hintEl.textContent = '请填写上班时间和坐班时长';
-        return;
+        popOfftime('--:--'); countdownEl.textContent = ''; dayWageLine.style.display = 'none'; wageLine.style.display = 'none';
+        offDate = null; hintEl.textContent = '请填写上班时间和坐班时长'; return;
       }
-
       const [h, m] = timeStr.split(':').map(Number);
-      const start = new Date();
-      start.setHours(h, m, 0, 0);
-      const off = new Date(start.getTime() + hours * 3600 * 1000);
-      offDate = off;
-
+      const start = new Date(); start.setHours(h, m, 0, 0);
+      const off = new Date(start.getTime() + hours * 3600 * 1000); offDate = off;
       const crossDay = off.getDate() !== start.getDate();
-      popOfftime(
-        `${pad(off.getHours())}:${pad(off.getMinutes())}` +
-        (crossDay ? ' <span class="next">（次日）</span>' : '')
-      );
+      popOfftime(`${pad(off.getHours())}:${pad(off.getMinutes())}` + (crossDay ? ' <span class="next">（次日）</span>' : ''));
 
-      // 时薪：月薪 ÷（本月工作天数 × 每天坐班时长）
       if (wageToggle.checked) {
-        const salary = parseFloat(salaryEl.value);
-        const workDays = parseFloat(workDaysEl.value);
+        const salary = parseFloat(salaryEl.value), workDays = parseFloat(workDaysEl.value);
         if (!isNaN(salary) && salary > 0 && !isNaN(workDays) && workDays > 0) {
-          const dayWage = salary / workDays;
-          const wage = dayWage / hours;
+          const dayWage = salary / workDays, wage = dayWage / hours;
           dayWageValueEl.textContent = `¥ ${dayWage.toFixed(2)} / 天`;
           wageValueEl.textContent = `¥ ${wage.toFixed(2)} / 小时`;
-          dayWageLine.style.display = 'flex';
-          wageLine.style.display = 'flex';
-        } else {
-          dayWageLine.style.display = 'none';
-          wageLine.style.display = 'none';
-        }
-      } else {
-        dayWageLine.style.display = 'none';
-        wageLine.style.display = 'none';
-      }
-
+          dayWageLine.style.display = 'flex'; wageLine.style.display = 'flex';
+        } else { dayWageLine.style.display = 'none'; wageLine.style.display = 'none'; }
+      } else { dayWageLine.style.display = 'none'; wageLine.style.display = 'none'; }
       updateCountdown();
     }
-
     function updateCountdown() {
       if (!offDate) return;
       const diff = offDate.getTime() - Date.now();
-
       if (diff <= 0) {
-        countdownEl.textContent = '🎉 可以下班啦！辛苦了～';
-        countdownEl.classList.add('celebrate');
-        resultEl.classList.add('done');
-        hintEl.textContent = '收工，下班快乐 🥳';
-        if (!wasDone) { confetti(); wasDone = true; }
-        return;
+        countdownEl.textContent = '🎉 收工啦！今天辛苦了～';
+        countdownEl.classList.add('celebrate'); resultEl.classList.add('done');
+        hintEl.textContent = `今天共摸鱼 ${fish.today} 条，下班快乐 🥳`;
+        if (!wasDone) { confetti(); wasDone = true; } return;
       }
-      countdownEl.classList.remove('celebrate');
-      resultEl.classList.remove('done');
-      wasDone = false;
+      countdownEl.classList.remove('celebrate'); resultEl.classList.remove('done'); wasDone = false;
+      const totalMin = Math.floor(diff / 60000), hh = Math.floor(totalMin / 60), mm = totalMin % 60, ss = Math.floor((diff % 60000) / 1000);
+      let txt = '距离下班还有 '; if (hh > 0) txt += `${hh} 小时 `; txt += `${mm} 分 ${pad(ss)} 秒`;
+      countdownEl.textContent = txt; hintEl.textContent = '一边摸鱼一边等，时间过得快 🐟';
+    }
+    setInterval(updateCountdown, 1000);
 
-      const totalMin = Math.floor(diff / 60000);
-      const hh = Math.floor(totalMin / 60);
-      const mm = totalMin % 60;
-      const ss = Math.floor((diff % 60000) / 1000);
+    /* ============ 摸鱼（钓鱼小游戏） ============ */
+    const fishToggle = $('fishToggle'), fishCard = $('fishCard');
+    const canvas = $('pond'), ctx = canvas.getContext('2d');
+    const actBtn = $('actBtn'), catchPop = $('catchPop'), catchBanner = $('catchBanner');
+    const todayCatchEl = $('todayCatch'), bestCatchEl = $('bestCatch'), fishLvEl = $('fishLv');
 
-      let txt = '距离下班还有 ';
-      if (hh > 0) txt += `${hh} 小时 `;
-      txt += `${mm} 分 ${pad(ss)} 秒`;
-      countdownEl.textContent = txt;
-      hintEl.textContent = '坚持住，马上就下班 💪';
+    // 渔获表（打工人专属梗），w 为权重
+    const CATCHES = [
+      { e: '🐟', n: '小鱼苗', w: 20, ds: '+1 摸鱼值', rank: 1, c: '#eef6ff' },
+      { e: '🐠', n: '咸鱼（你本鱼）', w: 15, ds: '“我躺平了，怎么了”', rank: 1, c: '#eef6ff' },
+      { e: '🦐', n: '小虾米', w: 13, ds: '职场小虾米，懂的都懂', rank: 1, c: '#eef6ff' },
+      { e: '🥾', n: '一只破靴子', w: 9, ds: '晦气，扔回去！', rank: 0, c: '#f3f3f3' },
+      { e: '🦀', n: '横行螃蟹', w: 8, ds: '像极了横着走的那位', rank: 2, c: '#fff3e8' },
+      { e: '🐡', n: '河豚', w: 7, ds: '别惹它，一碰就炸', rank: 2, c: '#fff3e8' },
+      { e: '🐙', n: '章鱼', w: 6, ds: '老板伸过来的触手', rank: 2, c: '#fff3e8' },
+      { e: '📄', n: '周报', w: 5, ds: '啊？这周还没写…', rank: 0, c: '#f3f3f3' },
+      { e: '📈', n: '一份 KPI', w: 4, ds: '快扔回去！快扔回去！', rank: 0, c: '#f3f3f3' },
+      { e: '📱', n: '老板的消息', w: 4, ds: '已读，乱回', rank: 0, c: '#f3f3f3' },
+      { e: '💰', n: '一袋钱', w: 2.2, ds: '年终奖？！（做梦）', rank: 3, c: '#fff4e0' },
+      { e: '🐉', n: '锦鲤', w: 1.5, ds: '转发！今日好运 +100', rank: 3, c: '#ffeef6' },
+      { e: '👑', n: '摸鱼王冠', w: 0.5, ds: '传说级！你就是摸鱼之王', rank: 4, c: '#fdf0ff' },
+    ];
+    const totalW = CATCHES.reduce((s, c) => s + c.w, 0);
+    function pickCatch() {
+      let r = Math.random() * totalW;
+      for (const c of CATCHES) { if ((r -= c.w) <= 0) return c; }
+      return CATCHES[0];
+    }
+    const LEVELS = [
+      [0, '摸鱼新手'], [3, '摸鱼学徒'], [8, '摸鱼能手'], [15, '摸鱼大师'], [30, '带薪摸鱼之王'], [60, '鱼塘承包商']
+    ];
+    function levelName(n) { let name = LEVELS[0][1]; for (const [t, nm] of LEVELS) if (n >= t) name = nm; return name; }
+
+    // 本地存储（按天）
+    const todayKey = 'fish_' + new Date().toISOString().slice(0, 10);
+    const fish = { today: 0, best: null, bestRank: -1 };
+    (function load() {
+      try {
+        const raw = localStorage.getItem(todayKey);
+        if (raw) { const o = JSON.parse(raw); fish.today = o.today || 0; fish.best = o.best || null; fish.bestRank = o.bestRank ?? -1; }
+      } catch (e) {}
+      renderStats();
+    })();
+    function save() { try { localStorage.setItem(todayKey, JSON.stringify(fish)); } catch (e) {} }
+    function renderStats() {
+      todayCatchEl.textContent = fish.today;
+      bestCatchEl.textContent = fish.best ? fish.best : '—';
+      fishLvEl.textContent = levelName(fish.today);
     }
 
-    setInterval(updateCountdown, 1000);
+    /* --- 画面：鱼塘 --- */
+    let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const swimmers = [];
+    function resize() {
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function initSwimmers() {
+      swimmers.length = 0;
+      const fishEmojis = ['🐟', '🐠', '🐡', '🦐'];
+      for (let i = 0; i < 5; i++) {
+        swimmers.push({
+          x: Math.random() * W, y: 55 + Math.random() * (H - 80),
+          sp: 0.25 + Math.random() * 0.5, dir: Math.random() < .5 ? 1 : -1,
+          e: fishEmojis[Math.floor(Math.random() * fishEmojis.length)],
+          size: 22 + Math.random() * 12, ph: Math.random() * 6.28
+        });
+      }
+    }
+
+    // 游戏状态
+    let state = 'idle';      // idle | waiting | bite
+    let bobX = 0, bobBase = 0, bobDip = 0;
+    let biteTimer = null, escapeTimer = null, t = 0, running = false;
+
+    function draw() {
+      t += 0.03;
+      // 水
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#cdeafe'); g.addColorStop(1, '#5fb0e8');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // 波光
+      ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        const yy = 30 + k * 55;
+        for (let x = 0; x <= W; x += 8) ctx.lineTo(x, yy + Math.sin(x * 0.05 + t + k) * 4);
+        ctx.stroke();
+      }
+      // 游鱼
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const f of swimmers) {
+        f.x += f.sp * f.dir;
+        if (f.x > W + 30) f.x = -30; if (f.x < -30) f.x = W + 30;
+        const yy = f.y + Math.sin(t + f.ph) * 5;
+        ctx.save(); ctx.translate(f.x, yy); ctx.globalAlpha = .85;
+        if (f.dir < 0) ctx.scale(-1, 1);
+        ctx.font = f.size + 'px serif'; ctx.fillText(f.e, 0, 0);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      // 浮漂 + 鱼线
+      if (state === 'waiting' || state === 'bite') {
+        bobBase = 46 + Math.sin(t * 1.5) * 3;
+        const by = bobBase + bobDip;
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(bobX, 0); ctx.lineTo(bobX, by); ctx.stroke();
+        // 浮漂
+        ctx.beginPath(); ctx.arc(bobX, by, 8, 0, 6.29);
+        ctx.fillStyle = state === 'bite' ? '#ff375f' : '#ff453a'; ctx.fill();
+        ctx.beginPath(); ctx.arc(bobX, by - 2, 8, Math.PI, 6.29); ctx.fillStyle = '#fff'; ctx.fill();
+        // 涟漪
+        if (state === 'bite') {
+          const r = (t * 30) % 26;
+          ctx.strokeStyle = `rgba(255,255,255,${1 - r / 26})`; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(bobX, by + 6, r + 4, 0, 6.29); ctx.stroke();
+          ctx.font = '20px serif'; ctx.fillText('❗', bobX, by - 26);
+        }
+      }
+      if (running) requestAnimationFrame(draw);
+    }
+
+    function setBtn(label, cls) { actBtn.textContent = label; actBtn.className = 'act-btn' + (cls ? ' ' + cls : ''); }
+
+    function castLine() {
+      state = 'waiting'; bobX = W * (0.3 + Math.random() * 0.4); bobDip = 0;
+      setBtn('⏳ 等鱼上钩…（别急）', 'waiting');
+      catchBanner.style.background = '#eef6ff';
+      catchBanner.innerHTML = '<span class="em">🎣</span><span><span class="nm">已抛竿</span><br><span class="ds">静静等浮漂动…</span></span>';
+      const delay = 1500 + Math.random() * 4000;
+      biteTimer = setTimeout(onBite, delay);
+    }
+    function onBite() {
+      state = 'bite'; bobDip = 10;
+      setBtn('⚡ 提竿！快！', 'bite');
+      if (navigator.vibrate) navigator.vibrate(60);
+      // 反应窗口
+      escapeTimer = setTimeout(() => {
+        state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
+        catchBanner.style.background = '#f3f3f3';
+        catchBanner.innerHTML = '<span class="em">💨</span><span><span class="nm">跑啦…</span><br><span class="ds">手慢了，鱼溜了，再来一竿！</span></span>';
+      }, 1100);
+    }
+    function reelIn() {
+      const c = pickCatch();
+      fish.today++;
+      if (c.rank > fish.bestRank) { fish.bestRank = c.rank; fish.best = c.e + ' ' + c.n; }
+      save(); renderStats();
+      // 弹出动画
+      catchPop.textContent = c.e; catchPop.classList.remove('show'); void catchPop.offsetWidth; catchPop.classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+      catchBanner.style.background = c.c;
+      catchBanner.innerHTML = `<span class="em">${c.e}</span><span><span class="nm">钓到了：${c.n}</span><br><span class="ds">${c.ds}</span></span>`;
+      if (c.rank >= 3) confetti();
+    }
+
+    actBtn.addEventListener('click', () => {
+      if (state === 'idle') { castLine(); }
+      else if (state === 'bite') {
+        clearTimeout(escapeTimer); state = 'idle'; bobDip = 0; setBtn('🎣 抛竿'); reelIn();
+      } else if (state === 'waiting') {
+        // 心急空军
+        clearTimeout(biteTimer); state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
+        catchBanner.style.background = '#f3f3f3';
+        catchBanner.innerHTML = '<span class="em">🫧</span><span><span class="nm">空军了</span><br><span class="ds">心急钓不到鱼，沉住气~</span></span>';
+      }
+    });
+
+    fishToggle.addEventListener('change', () => {
+      if (fishToggle.checked) {
+        fishCard.style.display = 'block';
+        requestAnimationFrame(() => {
+          resize(); initSwimmers(); running = true; draw();
+          fishCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      } else {
+        running = false; fishCard.style.display = 'none';
+        clearTimeout(biteTimer); clearTimeout(escapeTimer); state = 'idle'; setBtn('🎣 抛竿');
+      }
+    });
+    window.addEventListener('resize', () => { if (running) { resize(); initSwimmers(); } });
+
     calculate();
   </script>
 </body>
