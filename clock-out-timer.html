@@ -131,6 +131,13 @@
     .stat .num { font-size: 24px; font-weight: 700; color: var(--accent); }
     .stat .lab { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
+    .fish-bar { display: flex; align-items: center; gap: 14px; font-size: 13px; color: #555; margin-bottom: 12px; }
+    .fish-bar b { color: var(--text); }
+    .fish-bar .shop { flex: 0 0 auto; margin-left: auto; padding: 6px 12px; font-size: 13px; }
+    .scene-row { display: flex; gap: 10px; margin-top: 4px; }
+    .scene-item { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px 6px; text-align: center; font-size: 26px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s, background .15s; }
+    .scene-item div { font-size: 12px; margin-top: 4px; color: #555; }
+    .scene-item.on { border-color: var(--accent); background: #eef4ff; }
     .fish-actions { display: flex; gap: 10px; margin-top: 12px; }
     .mini-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-size: 14px; font-weight: 600; font-family: inherit; color: var(--accent); background: #eef4ff; cursor: pointer; transition: transform .12s; }
     .mini-btn:active { transform: scale(.96); }
@@ -257,6 +264,12 @@
       <div class="fish-head">
         <span class="t">🎣 带薪钓鱼</span>
         <span class="lv" id="fishLv">摸鱼新手</span>
+      </div>
+
+      <div class="fish-bar">
+        <span>🎣 鱼竿 Lv.<b id="rodLv">1</b></span>
+        <span>🪙 <b id="coins">0</b></span>
+        <button class="mini-btn shop" id="shopBtn">🎒 商店</button>
       </div>
 
       <div class="pond-wrap">
@@ -446,11 +459,31 @@
       { e: '👑', n: '摸鱼王冠', w: 0.4, ds: '传说级！你就是摸鱼之王', rank: 4, c: '#fdf0ff' },
     ];
     const totalW = CATCHES.reduce((s, c) => s + c.w, 0);
-    function pickCatch() {
+    function rollOnce() {
       let r = Math.random() * totalW;
       for (const c of CATCHES) { if ((r -= c.w) <= 0) return c; }
       return CATCHES[0];
     }
+    // 鱼竿等级越高，抛竿次数越多、取最稀有的一条（稀有率↑）
+    function pickCatch() {
+      const rolls = 1 + Math.floor((rod - 1) / 2);
+      let best = rollOnce();
+      for (let i = 1; i < rolls; i++) { const x = rollOnce(); if (x.rank > best.rank) best = x; }
+      return best;
+    }
+
+    /* 轻养成：摸鱼币 / 鱼竿 / 场景 */
+    let coins = +(localStorage.getItem('fish_coins') || 0);
+    let rod = +(localStorage.getItem('fish_rod') || 1);
+    let scene = +(localStorage.getItem('fish_scene') || 0);
+    function saveProg() { try { localStorage.setItem('fish_coins', coins); localStorage.setItem('fish_rod', rod); localStorage.setItem('fish_scene', scene); } catch (e) {} }
+    const COIN_BY_RANK = [1, 2, 5, 15, 50];       // 各稀有度的收益
+    const ROD_COST = [0, 0, 60, 180, 450, 1100];  // 升到 Lv.2~5 的花费
+    const SCENES = [
+      { name: '清晨鱼塘', emoji: '🌊', top: '#cdeafe', bot: '#5fb0e8', wave: 'rgba(255,255,255,.25)' },
+      { name: '海边日落', emoji: '🌅', top: '#ffd9a0', bot: '#ff7e9d', wave: 'rgba(255,255,255,.32)' },
+      { name: '加班夜塘', emoji: '🌙', top: '#2b3a67', bot: '#0f1c3f', wave: 'rgba(130,170,255,.28)' }
+    ];
     const LEVELS = [
       [0, '摸鱼新手'], [3, '摸鱼学徒'], [8, '摸鱼能手'], [15, '摸鱼大师'], [30, '带薪摸鱼之王'], [60, '鱼塘承包商']
     ];
@@ -471,6 +504,9 @@
       todayCatchEl.textContent = fish.today;
       bestCatchEl.textContent = fish.best ? fish.best : '—';
       fishLvEl.textContent = levelName(fish.today);
+      const rl = $('rodLv'), cn = $('coins');
+      if (rl) rl.textContent = rod;
+      if (cn) cn.textContent = coins;
     }
 
     // 图鉴（全部时间收集，跨天保留）
@@ -515,12 +551,13 @@
 
     function draw() {
       t += 0.03;
+      const sc = SCENES[scene] || SCENES[0];
       // 水
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, '#cdeafe'); g.addColorStop(1, '#5fb0e8');
+      g.addColorStop(0, sc.top); g.addColorStop(1, sc.bot);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       // 波光
-      ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+      ctx.strokeStyle = sc.wave; ctx.lineWidth = 2;
       for (let k = 0; k < 3; k++) {
         ctx.beginPath();
         const yy = 30 + k * 55;
@@ -593,6 +630,7 @@
       const tk = dateStr(new Date());
       stats.daily[tk] = (stats.daily[tk] || 0) + 1;
       saveStats();
+      coins += (COIN_BY_RANK[c.rank] || 1); saveProg();
       if (c.rank > fish.bestRank) { fish.bestRank = c.rank; fish.best = c.e + ' ' + c.n; }
       save(); renderStats();
     }
@@ -739,12 +777,15 @@
     const idlePool = CATCHES.filter((c) => c.rank <= 2);
     const idleW = idlePool.reduce((s, c) => s + c.w, 0);
     function pickIdleCatch() { let r = Math.random() * idleW; for (const c of idlePool) { if ((r -= c.w) <= 0) return c; } return idlePool[0]; }
-    setInterval(() => {
+    function idleInterval() { return Math.max(12000, 30000 - rod * 3000); } // 鱼竿越高，挂机越快
+    function idleTick() {
       if (running && state === 'idle') {
         const c = pickIdleCatch(); recordCatch(c);
         if (idlePop) { idlePop.textContent = '+' + c.e; idlePop.classList.remove('go'); void idlePop.offsetWidth; idlePop.classList.add('go'); }
       }
-    }, 28000);
+      setTimeout(idleTick, idleInterval());
+    }
+    setTimeout(idleTick, idleInterval());
 
     // 离线挂机奖励
     const SEEN_KEY = 'fish_lastSeen';
@@ -771,6 +812,33 @@
       const cb = $('claimBtn'); if (cb) cb.addEventListener('click', () => { closeModal(); if (navigator.vibrate) navigator.vibrate(40); });
     }
     offlineReward();
+
+    /* ===== 摸鱼商店：鱼竿升级 + 场景切换 ===== */
+    function renderShop() {
+      let html = `<div class="rep-sub">🪙 摸鱼币 <b>${coins}</b>　·　🎣 鱼竿 Lv.<b>${rod}</b>（钓得多攒币，升级提升稀有率 + 挂机更快）</div>`;
+      if (rod >= 5) {
+        html += `<div class="rep-line"><span class="ic">🎣</span><span>鱼竿已满级 Lv.5，稀有率与挂机速度拉满！🏆</span></div>`;
+      } else {
+        const cost = ROD_COST[rod + 1];
+        const ok = coins >= cost;
+        html += `<div class="rep-line"><span class="ic">🎣</span><span>升级到 <b>Lv.${rod + 1}</b>：稀有率更高、挂机更快</span></div>`;
+        html += `<button class="act-btn" id="rodUp" ${ok ? '' : 'disabled'} style="margin-top:10px;${ok ? '' : 'opacity:.5;'}">${ok ? `🔨 升级鱼竿（-🪙${cost}）` : `🪙 还差 ${cost - coins} 币`}</button>`;
+      }
+      html += `<div class="rep-sub" style="margin-top:20px;">🏞️ 选择鱼塘场景</div><div class="scene-row">`;
+      SCENES.forEach((s, i) => { html += `<div class="scene-item ${i === scene ? 'on' : ''}" data-s="${i}">${s.emoji}<div>${s.name}</div></div>`; });
+      html += `</div>`;
+      sheetBody.innerHTML = html;
+      openModal('🎒 摸鱼商店');
+      const ru = $('rodUp');
+      if (ru) ru.addEventListener('click', () => {
+        const cost = ROD_COST[rod + 1];
+        if (coins >= cost) { coins -= cost; rod++; saveProg(); renderStats(); renderShop(); if (navigator.vibrate) navigator.vibrate([40, 40, 60]); }
+      });
+      document.querySelectorAll('.scene-item').forEach((el) => el.addEventListener('click', () => {
+        scene = +el.dataset.s; saveProg(); renderShop();
+      }));
+    }
+    $('shopBtn').addEventListener('click', renderShop);
 
     function roundRect(c, x, y, w, h, r) {
       c.beginPath(); c.moveTo(x + r, y);
