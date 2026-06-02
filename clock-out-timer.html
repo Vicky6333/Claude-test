@@ -160,6 +160,15 @@
     .flash.go { animation: flashgo .9s ease; }
     @keyframes flashgo { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
 
+    /* 陪钓搭子 */
+    .buddy { position: absolute; left: 10px; bottom: 8px; display: flex; align-items: flex-end; gap: 6px; max-width: 80%; z-index: 3; pointer-events: none; }
+    .buddy .av { font-size: 34px; flex-shrink: 0; animation: bob 2.6s ease-in-out infinite; }
+    @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-5px) rotate(4deg); } }
+    .buddy .bubble { background: rgba(255, 255, 255, .92); border-radius: 13px; padding: 6px 10px; font-size: 11.5px; color: #444; line-height: 1.4; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); margin-bottom: 6px; }
+    .idle-pop { position: absolute; left: 44px; bottom: 42px; font-size: 18px; font-weight: 800; color: #16a34a; opacity: 0; z-index: 4; pointer-events: none; text-shadow: 0 1px 2px rgba(255, 255, 255, .8); }
+    .idle-pop.go { animation: idleup 1.5s ease forwards; }
+    @keyframes idleup { 0% { opacity: 0; transform: translateY(6px) scale(.8); } 25% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px); } }
+
     /* 周报 */
     .rep-sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
     .rep-line { display: flex; gap: 10px; padding: 11px 2px; border-bottom: 1px solid #f0f0f0; font-size: 14px; line-height: 1.5; }
@@ -254,6 +263,8 @@
         <canvas id="pond"></canvas>
         <div class="flash" id="flash"></div>
         <div class="catch-pop" id="catchPop"></div>
+        <div class="idle-pop" id="idlePop">+🐟</div>
+        <div class="buddy"><span class="av">🐱</span><span class="bubble" id="buddySay">…</span></div>
       </div>
 
       <button class="act-btn" id="actBtn">🎣 抛竿</button>
@@ -572,8 +583,8 @@
         catchBanner.innerHTML = '<span class="em">💨</span><span><span class="nm">跑啦…</span><br><span class="ds">手慢了，鱼溜了，再来一竿！</span></span>';
       }, 1100);
     }
-    function reelIn() {
-      const c = pickCatch();
+    // 记账：被主动钓 / 挂机 / 离线共用
+    function recordCatch(c) {
       fish.today++;
       dex[c.n] = (dex[c.n] || 0) + 1; saveDex();
       stats.hits++;
@@ -584,6 +595,10 @@
       saveStats();
       if (c.rank > fish.bestRank) { fish.bestRank = c.rank; fish.best = c.e + ' ' + c.n; }
       save(); renderStats();
+    }
+    function reelIn() {
+      const c = pickCatch();
+      recordCatch(c);
       // 弹出动画（稀有更大 + 金光）
       catchPop.style.fontSize = (c.rank >= 4 ? 84 : c.rank >= 3 ? 70 : 58) + 'px';
       catchPop.textContent = c.e; catchPop.classList.remove('show'); void catchPop.offsetWidth; catchPop.classList.add('show');
@@ -591,6 +606,7 @@
       if (navigator.vibrate) navigator.vibrate(c.rank >= 3 ? [40, 50, 40, 50, 60] : [30, 40, 30]);
       catchBanner.style.background = c.c;
       catchBanner.innerHTML = `<span class="em">${c.e}</span><span><span class="nm">钓到了：${c.n}${c.rank >= 4 ? '　🏆传说！' : c.rank >= 3 ? '　✨稀有！' : ''}</span><br><span class="ds">${c.ds}</span></span>`;
+      buddyReact(c);
     }
 
     actBtn.addEventListener('click', () => {
@@ -694,6 +710,67 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' || e.key === '`') { e.preventDefault(); bossScreen.classList.contains('show') ? hideBoss() : showBoss(); }
     });
+
+    /* ===== 陪钓搭子 + 挂机摸鱼 ===== */
+    const buddySayEl = $('buddySay'), idlePop = $('idlePop');
+    const BUDDY = [
+      '老板不看的时候，海阔凭鱼跃 🌊',
+      '工位是租来的，摸鱼是自己的。',
+      '急啥？鱼不会跑，你的 KPI 才会。',
+      '你摸鱼，我盯梢，配合默契 😼',
+      '今天的鱼，比今天的活儿有意思。',
+      '钓不到大的，摸条小的也快乐。',
+      '带薪钓鱼，越钓越有 💰',
+      '周报？等下班再说。',
+      '深呼吸，假装在思考工作 😌',
+      '摸鱼一时爽，一直摸鱼一直爽。'
+    ];
+    function buddySet(t) { if (buddySayEl) buddySayEl.textContent = t; }
+    function buddyReact(c) {
+      if (c.rank >= 4) buddySet('我滴妈！传说级！今天可以提桶跑路了 🏝️');
+      else if (c.rank >= 3) buddySet('哟，稀有货，上班有排面了 ✨');
+      else if (c.rank === 0) buddySet(pick(['晦气，赶紧扔回去！', '又是这种东西…叹气 🫠']));
+      else buddySet(pick(['不错不错，继续摸 🐟', '再来一条~', '稳住，别让老板发现']));
+    }
+    buddySet(pick(BUDDY));
+    setInterval(() => { if (running && state === 'idle') buddySet(pick(BUDDY)); }, 6500);
+
+    // 挂机自动摸鱼（搭子帮你钓，常见为主）
+    const idlePool = CATCHES.filter((c) => c.rank <= 2);
+    const idleW = idlePool.reduce((s, c) => s + c.w, 0);
+    function pickIdleCatch() { let r = Math.random() * idleW; for (const c of idlePool) { if ((r -= c.w) <= 0) return c; } return idlePool[0]; }
+    setInterval(() => {
+      if (running && state === 'idle') {
+        const c = pickIdleCatch(); recordCatch(c);
+        if (idlePop) { idlePop.textContent = '+' + c.e; idlePop.classList.remove('go'); void idlePop.offsetWidth; idlePop.classList.add('go'); }
+      }
+    }, 28000);
+
+    // 离线挂机奖励
+    const SEEN_KEY = 'fish_lastSeen';
+    function saveSeen() { try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch (e) {} }
+    window.addEventListener('pagehide', saveSeen);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveSeen(); });
+    setInterval(saveSeen, 15000);
+    function fmtDur(min) { return min >= 60 ? `${Math.floor(min / 60)} 小时 ${Math.floor(min % 60)} 分` : `${Math.max(1, Math.floor(min))} 分钟`; }
+    function offlineReward() {
+      let last = 0; try { last = parseInt(localStorage.getItem(SEEN_KEY) || '0', 10); } catch (e) {}
+      saveSeen();
+      if (!last) return;
+      const min = (Date.now() - last) / 60000;
+      if (min < 5) return;
+      const n = Math.min(30, Math.floor(min / 3));
+      if (n < 1) return;
+      const got = {};
+      for (let i = 0; i < n; i++) { const c = pickIdleCatch(); recordCatch(c); if (!got[c.n]) got[c.n] = { e: c.e, n: c.n, ct: 0 }; got[c.n].ct++; }
+      let html = `<div class="rep-sub">你离开的 <b>${fmtDur(min)}</b> 里，摸鱼搭子 🐱 帮你偷偷钓到了 <b>${n}</b> 条！</div><div class="dex-grid">`;
+      for (const k in got) { const g = got[k]; html += `<div class="dex-item"><div class="de">${g.e}</div><div class="dn">${g.n}</div><div class="dn" style="color:var(--muted);font-weight:400;">×${g.ct}</div></div>`; }
+      html += `</div><button class="act-btn" id="claimBtn" style="margin-top:16px;">🎁 一键领取</button>`;
+      sheetBody.innerHTML = html;
+      openModal('🐱 挂机摸鱼成果');
+      const cb = $('claimBtn'); if (cb) cb.addEventListener('click', () => { closeModal(); if (navigator.vibrate) navigator.vibrate(40); });
+    }
+    offlineReward();
 
     function roundRect(c, x, y, w, h, r) {
       c.beginPath(); c.moveTo(x + r, y);
