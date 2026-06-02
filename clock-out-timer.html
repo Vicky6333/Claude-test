@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>摸鱼计时器 · 打工人的带薪摸鱼时间</title>
+  <style>
+    :root {
+      --text: #1d1d1f;
+      --muted: #86868b;
+      --accent: #0071e3;
+      --accent-2: #5856d6;
+      --green: #34c759;
+      --field: #f5f5f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 40px;
+      background: linear-gradient(160deg, #e9f0ff 0%, #f5f5f7 45%, #ffeef5 100%);
+    }
+    .app { width: 100%; max-width: 430px; }
+
+    .card {
+      position: relative;
+      background: rgba(255, 255, 255, .8);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 28px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .1), 0 2px 8px rgba(0, 0, 0, .04);
+      border: 1px solid rgba(255, 255, 255, .6);
+      animation: pop-in .55s cubic-bezier(.16, 1, .3, 1);
+    }
+    .card + .card { margin-top: 18px; }
+    @keyframes pop-in {
+      from { opacity: 0; transform: translateY(18px) scale(.97); }
+      to { opacity: 1; transform: none; }
+    }
+
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -.5px; display: flex; align-items: center; gap: 9px; }
+    .rod { display: inline-block; font-size: 28px; transform-origin: 70% 70%; animation: cast 3s ease-in-out infinite; }
+    @keyframes cast { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+    .subtitle { color: var(--muted); font-size: 13.5px; margin: 7px 0 22px; line-height: 1.5; }
+
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500; }
+    input[type="time"], input[type="number"], input[type="month"] {
+      width: 100%; padding: 13px 15px; border-radius: 13px; border: 1.5px solid transparent;
+      background: var(--field); color: var(--text); font-size: 16px; font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(0, 113, 227, .14); }
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+
+    .toggle { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 500; margin: 6px 0 16px; user-select: none; }
+    .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; cursor: pointer; background: #e9e9ea; border-radius: 31px; transition: background .3s; }
+    .slider::before { content: ""; position: absolute; height: 27px; width: 27px; left: 2px; top: 2px; background: #fff; border-radius: 50%; box-shadow: 0 2px 5px rgba(0, 0, 0, .25); transition: transform .28s cubic-bezier(.16, 1, .3, 1); }
+    .switch input:checked + .slider { background: var(--green); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    #wageFields { display: none; animation: pop-in .35s ease; }
+    .tip { color: var(--muted); font-size: 12px; line-height: 1.5; margin: -6px 0 4px; }
+
+    .result {
+      margin-top: 4px; padding: 22px; border-radius: 22px; text-align: center;
+      background: linear-gradient(135deg, rgba(0, 113, 227, .09), rgba(88, 86, 214, .07));
+      border: 1px solid rgba(0, 113, 227, .16); transition: background .4s, border-color .4s;
+    }
+    .result.done { background: linear-gradient(135deg, rgba(52, 199, 89, .14), rgba(48, 209, 88, .08)); border-color: rgba(52, 199, 89, .3); }
+    .result .cap { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .offtime { font-size: 44px; font-weight: 700; letter-spacing: -1px; color: var(--accent); margin: 6px 0 2px; transition: color .4s; }
+    .result.done .offtime { color: var(--green); }
+    .offtime.pop { animation: numpop .42s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes numpop { 0% { transform: scale(.78); opacity: .5; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+    .offtime .next { font-size: 15px; color: var(--muted); font-weight: 500; }
+    .countdown { font-size: 15px; color: var(--accent); margin-top: 6px; font-weight: 500; }
+    .countdown.celebrate { color: var(--green); font-weight: 600; font-size: 17px; animation: bounce .6s ease infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    .wage-line { margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(0, 0, 0, .12); font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; }
+    .wage-line .k { color: var(--muted); font-weight: 500; }
+    .wage-line .v { color: var(--accent); font-weight: 700; font-size: 16px; }
+    .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 12px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 16px; }
+
+    /* ===== 摸鱼模式 ===== */
+    .fish-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .fish-head .t { font-size: 19px; font-weight: 700; }
+    .fish-head .lv { font-size: 12px; color: #fff; background: linear-gradient(135deg, #34c759, #30b8d6); padding: 4px 11px; border-radius: 20px; font-weight: 600; }
+    .pond-wrap { position: relative; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 12px rgba(0, 0, 0, .12); }
+    #pond { display: block; width: 100%; height: 210px; }
+    .catch-pop {
+      position: absolute; left: 50%; top: 34%;
+      width: 110px; height: 110px; border-radius: 50%;
+      background: radial-gradient(circle at 50% 36%, #ffffff, #eef3f8);
+      border: 4px solid #fff; box-shadow: 0 12px 30px rgba(0, 0, 0, .22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px; line-height: 1; opacity: 0; pointer-events: none;
+      transform: translate(-50%, -50%) scale(.4);
+    }
+    .catch-pop.r3 { border-color: #ffc24d; box-shadow: 0 0 0 6px rgba(255, 194, 77, .28), 0 12px 30px rgba(0, 0, 0, .22); }
+    .catch-pop.r4 { border-color: #c77dff; box-shadow: 0 0 0 7px rgba(199, 125, 255, .34), 0 12px 34px rgba(0, 0, 0, .26); }
+    .catch-pop.show { animation: catchpop 1.5s ease forwards; }
+    @keyframes catchpop {
+      0% { opacity: 0; transform: translate(-50%, -10%) scale(.3); }
+      25% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
+      70% { opacity: 1; transform: translate(-50%, -70%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -120%) scale(.9); }
+    }
+    .act-btn {
+      width: 100%; margin-top: 14px; padding: 16px; border: none; border-radius: 16px;
+      font-size: 18px; font-weight: 700; font-family: inherit; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, #0071e3, #5856d6); transition: transform .12s, box-shadow .2s, background .25s;
+      box-shadow: 0 8px 22px rgba(0, 113, 227, .3);
+    }
+    .act-btn:active { transform: scale(.96); }
+    .act-btn.bite { background: linear-gradient(135deg, #ff9f0a, #ff375f); box-shadow: 0 8px 22px rgba(255, 55, 95, .4); animation: shake .35s ease infinite; }
+    .act-btn.waiting { background: linear-gradient(135deg, #8e8e93, #aeaeb2); box-shadow: none; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .catch-banner {
+      position: relative; margin-top: 12px; padding: 12px 14px 12px 18px; border-radius: 14px; font-size: 14px;
+      background: #f5f5f7; display: flex; align-items: center; gap: 11px; min-height: 54px; overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, .04); transition: background .3s, border-color .3s; line-height: 1.4;
+    }
+    .catch-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rk, #d2d2d7); }
+    .catch-banner .em { font-size: 30px; flex-shrink: 0; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .14)); }
+    .catch-banner .meta { flex: 1; min-width: 0; }
+    .catch-banner .nm { font-weight: 700; }
+    .catch-banner .ds { color: var(--muted); font-size: 12.5px; }
+    .catch-banner .tag { display: inline-block; font-size: 10.5px; font-weight: 700; color: #fff; padding: 2px 8px; border-radius: 20px; margin-left: 7px; vertical-align: 1px; background: var(--rk, #aaa); }
+    .catch-banner.r0 { --rk: #b0b3b8; background: #f3f4f6; }
+    .catch-banner.r1 { --rk: #34c759; background: #eefaf0; }
+    .catch-banner.r2 { --rk: #0a84ff; background: #eaf4ff; }
+    .catch-banner.r3 { --rk: #f5a623; background: #fff7e6; }
+    .catch-banner.r4 { --rk: #a855f7; background: linear-gradient(135deg, #f7edff, #ffeef6); }
+    .catch-banner.info { --rk: #5aa9ff; background: #eef6ff; }
+    .catch-banner.miss { --rk: #c2c2c7; background: #f3f3f3; }
+    .stats { display: flex; gap: 10px; margin-top: 12px; }
+    .stat { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px; text-align: center; }
+    .stat .num { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .stat .lab { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+    .fish-bar { display: flex; align-items: center; gap: 14px; font-size: 13px; color: #555; margin-bottom: 12px; }
+    .fish-bar b { color: var(--text); }
+    .fish-bar .shop { flex: 0 0 auto; margin-left: auto; padding: 6px 12px; font-size: 13px; }
+    .shop-wallet { display: flex; gap: 10px; margin-bottom: 16px; }
+    .shop-chip { flex: 1; background: linear-gradient(135deg, #fff7e0, #ffeccc); border: 1px solid #ffe0a3; border-radius: 16px; padding: 12px 14px; }
+    .shop-chip.rod { background: linear-gradient(135deg, #eef4ff, #f3edff); border-color: #dde3ff; }
+    .shop-chip .cl { font-size: 11.5px; color: var(--muted); font-weight: 500; }
+    .shop-chip .cv { font-size: 22px; font-weight: 800; margin-top: 3px; }
+    .rod-card { background: linear-gradient(135deg, #f3f7ff, #faf3ff); border: 1px solid #e6e9f5; border-radius: 18px; padding: 16px; }
+    .rod-dots { display: flex; gap: 6px; margin: 2px 0 4px; }
+    .rod-dots i { flex: 1; height: 7px; border-radius: 6px; background: #e1e4ef; }
+    .rod-dots i.on { background: linear-gradient(90deg, #5aa9ff, #7c5cf0); }
+    .shop-title { font-size: 14px; font-weight: 700; margin: 22px 0 10px; }
+    .scene-row { display: flex; gap: 10px; margin-top: 4px; }
+    .scene-item { flex: 1; background: #f5f5f7; border-radius: 14px; padding: 12px 6px; text-align: center; font-size: 26px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s, background .15s; }
+    .scene-item div { font-size: 12px; margin-top: 4px; color: #555; }
+    .scene-item.on { border-color: var(--accent); background: #eef4ff; }
+    .fish-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .mini-btn { flex: 1; padding: 12px; border: none; border-radius: 14px; font-size: 14px; font-weight: 600; font-family: inherit; color: var(--accent); background: #eef4ff; cursor: pointer; transition: transform .12s; }
+    .mini-btn:active { transform: scale(.96); }
+
+    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal.show { display: flex; animation: fadein .25s ease; }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+    .sheet { background: #fff; width: 100%; max-width: 430px; max-height: 86vh; border-radius: 26px 26px 0 0; padding: 20px 20px 32px; overflow-y: auto; animation: slideup .32s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+    .sheet-head .close { color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    .dex-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .dex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .dex-item { position: relative; background: #fff; border: 1.5px solid #ececf0; border-radius: 16px; padding: 15px 8px 12px; text-align: center; }
+    .dex-item .de { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .1)); }
+    .dex-item .dn { font-size: 12px; margin-top: 6px; font-weight: 600; }
+    .dex-item .rk { display: inline-block; margin-top: 6px; font-size: 9.5px; font-weight: 700; color: #fff; padding: 1px 8px; border-radius: 10px; background: var(--rk, #bbb); }
+    .dex-item.locked { background: #f3f3f5; border-color: #ececf0; }
+    .dex-item.locked .de { filter: grayscale(1); opacity: .3; }
+    .dex-item.locked .dn { color: var(--muted); }
+    .share-card { width: 100%; border-radius: 18px; display: block; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
+    .share-tip { color: var(--muted); font-size: 13px; text-align: center; margin-top: 14px; line-height: 1.5; }
+
+    .confetti-piece { position: fixed; top: -14px; width: 9px; height: 15px; border-radius: 2px; z-index: 50; pointer-events: none; animation: fall 2.1s linear forwards; }
+    @keyframes fall { to { transform: translateY(106vh) rotate(560deg); opacity: .85; } }
+
+    /* 稀有金光 */
+    .flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 38%, rgba(255, 240, 170, .95), rgba(255, 215, 90, 0) 62%); }
+    .flash.go { animation: flashgo .9s ease; }
+    @keyframes flashgo { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+
+    /* 陪钓搭子 */
+    .buddy { position: absolute; left: 10px; bottom: 8px; display: flex; align-items: flex-end; gap: 6px; max-width: 80%; z-index: 3; pointer-events: none; }
+    .buddy .av { font-size: 34px; flex-shrink: 0; animation: bob 2.6s ease-in-out infinite; }
+    @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-5px) rotate(4deg); } }
+    .buddy .bubble { background: rgba(255, 255, 255, .92); border-radius: 13px; padding: 6px 10px; font-size: 11.5px; color: #444; line-height: 1.4; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); margin-bottom: 6px; }
+    .idle-pop { position: absolute; left: 44px; bottom: 42px; font-size: 18px; font-weight: 800; color: #16a34a; opacity: 0; z-index: 4; pointer-events: none; text-shadow: 0 1px 2px rgba(255, 255, 255, .8); }
+    .idle-pop.go { animation: idleup 1.5s ease forwards; }
+    @keyframes idleup { 0% { opacity: 0; transform: translateY(6px) scale(.8); } 25% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-30px); } }
+
+    /* 周报 */
+    .rep-sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+    .rep-line { display: flex; gap: 10px; padding: 11px 2px; border-bottom: 1px solid #f0f0f0; font-size: 14px; line-height: 1.5; }
+    .rep-line .ic { font-size: 18px; flex-shrink: 0; }
+    .rep-badge { margin-top: 18px; text-align: center; background: linear-gradient(135deg, #eef4ff, #f5edff); border-radius: 18px; padding: 20px; }
+    .rep-badge .bt { font-size: 13px; color: var(--muted); }
+    .rep-badge .bn { font-size: 24px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+    /* 老板键 */
+    .boss-key { position: fixed; right: 14px; bottom: 14px; width: 46px; height: 46px; border-radius: 50%; border: none; background: rgba(255, 255, 255, .7); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 4px 14px rgba(0, 0, 0, .15); font-size: 21px; z-index: 90; cursor: pointer; opacity: .55; transition: transform .12s, opacity .2s; }
+    .boss-key:active { transform: scale(.9); }
+    .boss-screen { position: fixed; inset: 0; background: #fff; z-index: 200; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .boss-screen.show { display: block; }
+    .doc-bar { position: sticky; top: 0; background: #fbfbfb; border-bottom: 1px solid #ececec; padding: 12px 16px; display: flex; align-items: center; gap: 8px; }
+    .doc-bar .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .doc-bar .doc-name { font-size: 13px; color: #5f6368; margin-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-bar .doc-saved { margin-left: auto; font-size: 12px; color: #9aa0a6; flex-shrink: 0; }
+    .doc-body { padding: 26px 22px 90px; max-width: 760px; margin: 0 auto; color: #202124; font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif; }
+    .doc-h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+    .doc-meta { color: #9aa0a6; font-size: 13px; margin-bottom: 26px; }
+    .doc-h2 { font-size: 17px; font-weight: 700; margin: 22px 0 8px; color: #1a1a1a; }
+    .doc-p { font-size: 15px; line-height: 1.95; color: #3c4043; }
+    .cursor { display: inline-block; width: 2px; height: 17px; background: #1a73e8; margin-left: 2px; vertical-align: -2px; animation: blink 1.1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .boss-hint { position: fixed; bottom: 18px; left: 0; right: 0; text-align: center; color: #c6cacf; font-size: 12px; transition: opacity .6s; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 计时卡片 -->
+    <div class="card">
+      <h1><span class="rod">🎣</span> 摸鱼计时器</h1>
+      <p class="subtitle">打工人的带薪摸鱼时间 —— 先算好几点能下班，再安心钓一会儿 🐟</p>
+
+      <div class="row">
+        <div class="field">
+          <label for="startTime">上班时间</label>
+          <input type="time" id="startTime" />
+        </div>
+        <div class="field">
+          <label for="hours">坐班时长（小时）</label>
+          <input type="number" id="hours" min="0" step="0.5" placeholder="如 8" value="8" />
+        </div>
+      </div>
+
+      <label class="toggle">
+        <span>算一算时薪 💰</span>
+        <span class="switch"><input type="checkbox" id="wageToggle" /><span class="slider"></span></span>
+      </label>
+
+      <div id="wageFields">
+        <div class="field">
+          <label for="salary">月薪（元）</label>
+          <input type="number" id="salary" min="0" step="0.01" placeholder="如 10000" />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="month">月份</label>
+            <input type="month" id="month" />
+          </div>
+          <div class="field">
+            <label for="workDays">本月工作天数</label>
+            <input type="number" id="workDays" min="1" max="31" step="1" />
+          </div>
+        </div>
+        <p class="tip">工作天数已按所选月份的工作日（周一~周五）自动填入，可手动改（扣除节假日 / 调休）</p>
+      </div>
+
+      <div class="result" id="result">
+        <div class="cap">预计下班（收工）时间</div>
+        <div class="offtime" id="offtime">--:--</div>
+        <div class="countdown" id="countdown"></div>
+        <div class="wage-line" id="dayWageLine" style="display:none;"><span class="k">日薪</span><span class="v" id="dayWageValue">--</span></div>
+        <div class="wage-line" id="wageLine" style="display:none;"><span class="k">时薪</span><span class="v" id="wageValue">--</span></div>
+      </div>
+      <p class="hint" id="hint">填好上班时间即可看到结果</p>
+
+      <label class="toggle" style="margin:18px 0 0;">
+        <span>🐟 摸鱼模式（边等下班边钓鱼）</span>
+        <span class="switch"><input type="checkbox" id="fishToggle" /><span class="slider"></span></span>
+      </label>
+    </div>
+
+    <!-- 摸鱼（钓鱼）卡片 -->
+    <div class="card" id="fishCard" style="display:none;">
+      <div class="fish-head">
+        <span class="t">🎣 带薪钓鱼</span>
+        <span class="lv" id="fishLv">摸鱼新手</span>
+      </div>
+
+      <div class="fish-bar">
+        <span>🎣 鱼竿 Lv.<b id="rodLv">1</b></span>
+        <span>🪙 <b id="coins">0</b></span>
+        <button class="mini-btn shop" id="shopBtn">🎒 商店</button>
+      </div>
+
+      <div class="pond-wrap">
+        <canvas id="pond"></canvas>
+        <div class="flash" id="flash"></div>
+        <div class="catch-pop" id="catchPop"></div>
+        <div class="idle-pop" id="idlePop">+🐟</div>
+        <div class="buddy">
+          <svg class="av" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
+            <ellipse cx="30" cy="50" rx="16" ry="12" fill="#ffb86b"/>
+            <path d="M44 52 q12 2 9 -11" stroke="#ffb86b" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M17 22 L15 9 L27 18 Z" fill="#ffc888"/>
+            <path d="M39 22 L41 9 L29 18 Z" fill="#ffc888"/>
+            <path d="M18.5 19 L17.5 12.5 L23 16.5 Z" fill="#ff9bb0"/>
+            <path d="M37.5 19 L38.5 12.5 L33 16.5 Z" fill="#ff9bb0"/>
+            <circle cx="28" cy="30" r="14" fill="#ffc888"/>
+            <path d="M24 18 l1.5 6 M28 17.5 l0 6.5 M32 18 l-1.5 6" stroke="#f59b53" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+            <circle cx="23" cy="31" r="2.3" fill="#3a2a20"/>
+            <circle cx="33" cy="31" r="2.3" fill="#3a2a20"/>
+            <circle cx="23.8" cy="30.3" r=".7" fill="#fff"/>
+            <circle cx="33.8" cy="30.3" r=".7" fill="#fff"/>
+            <ellipse cx="28" cy="33.6" rx="1.5" ry="1" fill="#ff8aa0"/>
+            <path d="M28 34.5 q-2 2 -4 .6 M28 34.5 q2 2 4 .6" stroke="#3a2a20" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <path d="M15 29 h-7 M15 32.5 h-6 M41 29 h7 M41 32.5 h6" stroke="#e3b489" stroke-width="1"/>
+            <line x1="41" y1="45" x2="59" y2="19" stroke="#9c6b3f" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M59 19 q3 11 -2 20" stroke="#bcd6e8" stroke-width="1" fill="none"/>
+          </svg>
+          <span class="bubble" id="buddySay">…</span>
+        </div>
+      </div>
+
+      <button class="act-btn" id="actBtn">🎣 抛竿</button>
+
+      <div class="catch-banner info" id="catchBanner">
+        <span class="em">🐟</span>
+        <span class="meta"><span class="nm">点「抛竿」开始摸鱼</span><br><span class="ds">趁老板不在，钓一会儿~</span></span>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="num" id="todayCatch">0</div><div class="lab">今日渔获（条）</div></div>
+        <div class="stat"><div class="num" id="bestCatch" style="font-size:18px;">—</div><div class="lab">今日最佳</div></div>
+      </div>
+
+      <div class="fish-actions">
+        <button class="mini-btn" id="dexBtn">📖 图鉴</button>
+        <button class="mini-btn" id="reportBtn">📈 周报</button>
+        <button class="mini-btn" id="shareBtn">📸 晒战绩</button>
+      </div>
+
+      <footer>摸鱼一时爽，一直摸鱼一直爽 🐟（记得留意老板）</footer>
+    </div>
+  </div>
+
+  <!-- 图鉴 / 战绩 / 周报弹层 -->
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <div class="sheet-head"><span id="sheetTitle">摸鱼图鉴</span><span class="close" id="modalClose">✕</span></div>
+      <div class="sheet-body" id="sheetBody"></div>
+    </div>
+  </div>
+
+  <!-- 老板键（点右下角或按 Esc / ` 键秒切工作文档） -->
+  <button class="boss-key" id="bossKey" title="老板键（Esc）">🫣</button>
+  <div class="boss-screen" id="bossScreen">
+    <div class="doc-bar">
+      <span class="dot" style="background:#ff5f57;"></span>
+      <span class="dot" style="background:#febc2e;"></span>
+      <span class="dot" style="background:#28c840;"></span>
+      <span class="doc-name">2026 Q2 项目复盘与改进计划（草稿）.docx</span>
+      <span class="doc-saved">已自动保存</span>
+    </div>
+    <div class="doc-body">
+      <div class="doc-h1">2026 Q2 项目复盘与改进计划</div>
+      <div class="doc-meta">负责人：本人　·　最后编辑：刚刚　·　协作者 3 人在线</div>
+
+      <div class="doc-h2">一、本季度目标完成情况</div>
+      <p class="doc-p">本季度围绕核心业务指标推进各项工作，整体进度符合预期。重点项目均已按里程碑节点交付，跨部门协作机制进一步理顺，关键链路的稳定性与交付质量较上季度有明显提升。</p>
+
+      <div class="doc-h2">二、存在的主要问题</div>
+      <p class="doc-p">1. 部分需求在评审阶段对齐不充分，导致后续返工，需在前置环节加强沟通；<br>2. 资源排期与实际投入存在一定偏差，建议引入更精细的颗粒度管理；<br>3. 文档沉淀不够及时，关键决策缺乏可追溯记录。</p>
+
+      <div class="doc-h2">三、下一步改进措施</div>
+      <p class="doc-p">围绕上述问题，计划从流程、协作、复盘三个维度持续优化，明确责任到人，并在下个迭代周期内落地验证，确保闭环管理<span class="cursor"></span></p>
+    </div>
+    <div class="boss-hint" id="bossHint">（点击任意处 / 按 Esc 继续摸鱼）</div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    /* ============ 计时 / 时薪 ============ */
+    const startTimeEl = $('startTime'), hoursEl = $('hours');
+    const wageToggle = $('wageToggle'), wageFields = $('wageFields');
+    const salaryEl = $('salary'), monthEl = $('month'), workDaysEl = $('workDays');
+    const offtimeEl = $('offtime'), countdownEl = $('countdown'), resultEl = $('result');
+    const wageLine = $('wageLine'), wageValueEl = $('wageValue');
+    const dayWageLine = $('dayWageLine'), dayWageValueEl = $('dayWageValue');
+    const hintEl = $('hint');
+
+    function weekdaysInMonth(y, m) {
+      const days = new Date(y, m, 0).getDate(); let c = 0;
+      for (let d = 1; d <= days; d++) { const wd = new Date(y, m - 1, d).getDay(); if (wd !== 0 && wd !== 6) c++; }
+      return c;
+    }
+    function fillWorkDays() { if (!monthEl.value) return; const [y, m] = monthEl.value.split('-').map(Number); workDaysEl.value = weekdaysInMonth(y, m); }
+
+    let lastOff = '';
+    function popOfftime(t) {
+      offtimeEl.innerHTML = t;
+      if (t !== lastOff) { offtimeEl.classList.remove('pop'); void offtimeEl.offsetWidth; offtimeEl.classList.add('pop'); lastOff = t; }
+    }
+    function confetti() {
+      const colors = ['#0071e3', '#34c759', '#ff375f', '#ffd60a', '#5856d6', '#ff9f0a'];
+      for (let i = 0; i < 26; i++) {
+        const c = document.createElement('div'); c.className = 'confetti-piece';
+        c.style.left = Math.random() * 100 + 'vw'; c.style.background = colors[i % colors.length];
+        c.style.animationDelay = (Math.random() * 0.35) + 's';
+        document.body.appendChild(c); setTimeout(() => c.remove(), 2300);
+      }
+    }
+
+    (function initNow() {
+      const now = new Date();
+      startTimeEl.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      monthEl.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+      fillWorkDays();
+    })();
+
+    wageToggle.addEventListener('change', () => { wageFields.style.display = wageToggle.checked ? 'block' : 'none'; calculate(); });
+    monthEl.addEventListener('change', () => { fillWorkDays(); calculate(); });
+    [startTimeEl, hoursEl, salaryEl, workDaysEl].forEach((el) => el.addEventListener('input', calculate));
+
+    let offDate = null, wasDone = false;
+    function calculate() {
+      const timeStr = startTimeEl.value, hours = parseFloat(hoursEl.value);
+      if (!timeStr || isNaN(hours) || hours <= 0) {
+        popOfftime('--:--'); countdownEl.textContent = ''; dayWageLine.style.display = 'none'; wageLine.style.display = 'none';
+        offDate = null; hintEl.textContent = '请填写上班时间和坐班时长'; return;
+      }
+      const [h, m] = timeStr.split(':').map(Number);
+      const start = new Date(); start.setHours(h, m, 0, 0);
+      const off = new Date(start.getTime() + hours * 3600 * 1000); offDate = off;
+      const crossDay = off.getDate() !== start.getDate();
+      popOfftime(`${pad(off.getHours())}:${pad(off.getMinutes())}` + (crossDay ? ' <span class="next">（次日）</span>' : ''));
+
+      if (wageToggle.checked) {
+        const salary = parseFloat(salaryEl.value), workDays = parseFloat(workDaysEl.value);
+        if (!isNaN(salary) && salary > 0 && !isNaN(workDays) && workDays > 0) {
+          const dayWage = salary / workDays, wage = dayWage / hours;
+          dayWageValueEl.textContent = `¥ ${dayWage.toFixed(2)} / 天`;
+          wageValueEl.textContent = `¥ ${wage.toFixed(2)} / 小时`;
+          dayWageLine.style.display = 'flex'; wageLine.style.display = 'flex';
+        } else { dayWageLine.style.display = 'none'; wageLine.style.display = 'none'; }
+      } else { dayWageLine.style.display = 'none'; wageLine.style.display = 'none'; }
+      updateCountdown();
+    }
+    function updateCountdown() {
+      if (!offDate) return;
+      const diff = offDate.getTime() - Date.now();
+      if (diff <= 0) {
+        countdownEl.textContent = '🎉 收工啦！今天辛苦了～';
+        countdownEl.classList.add('celebrate'); resultEl.classList.add('done');
+        hintEl.textContent = `今天共摸鱼 ${fish.today} 条，下班快乐 🥳`;
+        if (!wasDone) { confetti(); wasDone = true; } return;
+      }
+      countdownEl.classList.remove('celebrate'); resultEl.classList.remove('done'); wasDone = false;
+      const totalMin = Math.floor(diff / 60000), hh = Math.floor(totalMin / 60), mm = totalMin % 60, ss = Math.floor((diff % 60000) / 1000);
+      let txt = '距离下班还有 '; if (hh > 0) txt += `${hh} 小时 `; txt += `${mm} 分 ${pad(ss)} 秒`;
+      countdownEl.textContent = txt; hintEl.textContent = '一边摸鱼一边等，时间过得快 🐟';
+    }
+    setInterval(updateCountdown, 1000);
+
+    /* ============ 摸鱼（钓鱼小游戏） ============ */
+    const fishToggle = $('fishToggle'), fishCard = $('fishCard');
+    const canvas = $('pond'), ctx = canvas.getContext('2d');
+    const actBtn = $('actBtn'), catchPop = $('catchPop'), catchBanner = $('catchBanner'), flash = $('flash');
+    const todayCatchEl = $('todayCatch'), bestCatchEl = $('bestCatch'), fishLvEl = $('fishLv');
+
+    // 渔获表（打工人专属梗），w 为权重
+    const CATCHES = [
+      // 晦气垃圾（rank 0）
+      { e: '🥾', n: '一只破靴子', w: 9, ds: '钓鱼佬的宿命开局', rank: 0, c: '#f3f3f3' },
+      { e: '📄', n: '上周的周报', w: 6, ds: '啊？还没交？', rank: 0, c: '#f3f3f3' },
+      { e: '📈', n: '一份 KPI', w: 5, ds: '快放生！快放生！', rank: 0, c: '#f3f3f3' },
+      { e: '📱', n: '老板@你', w: 5, ds: '已读，装没看见', rank: 0, c: '#f3f3f3' },
+      { e: '🧾', n: '报销驳回单', w: 4, ds: '又被打回来了…', rank: 0, c: '#f3f3f3' },
+      { e: '⏰', n: '加班通知', w: 4, ds: '已屏蔽该联系人', rank: 0, c: '#f3f3f3' },
+      // 常见（rank 1）
+      { e: '🐟', n: '小鱼苗', w: 14, ds: '+1 摸鱼经验', rank: 1, c: '#eef6ff' },
+      { e: '🐠', n: '咸鱼（你本鱼）', w: 12, ds: '“我摆烂了，咋地”', rank: 1, c: '#eef6ff' },
+      { e: '🦐', n: '职场小虾米', w: 10, ds: '懂的都懂', rank: 1, c: '#eef6ff' },
+      { e: '🐌', n: 'DDL 前的你', w: 8, ds: '慢慢爬，来得及（吗）', rank: 1, c: '#eef6ff' },
+      // 不常见（rank 2）
+      { e: '🦀', n: '横行螃蟹', w: 7, ds: '像极了横着走的那位', rank: 2, c: '#fff3e8' },
+      { e: '🐙', n: '八爪章鱼', w: 6, ds: '老板伸过来的八只手', rank: 2, c: '#fff3e8' },
+      { e: '🐢', n: '摸鱼老油条', w: 6, ds: '稳得很，从不慌', rank: 2, c: '#fff3e8' },
+      { e: '🦑', n: '一条鱿鱼', w: 5, ds: '天天想 carry，小心被“鱿”', rank: 2, c: '#fff3e8' },
+      // 稀有（rank 3）
+      { e: '🦈', n: '卷王鲨鱼', w: 3.5, ds: '快跑！它会把你卷死', rank: 3, c: '#ffe9ec' },
+      { e: '🛟', n: '划水救生圈', w: 3, ds: '摸鱼人の本命神器', rank: 3, c: '#fff4e0' },
+      { e: '🍗', n: '老板的下午茶', w: 2.5, ds: '神不知鬼不觉顺走了', rank: 3, c: '#fff4e0' },
+      { e: '💰', n: '一袋钱', w: 2, ds: '年终奖？？（梦里有）', rank: 3, c: '#fff4e0' },
+      { e: '🐉', n: '转运锦鲤', w: 1.6, ds: '截图转发，今日好运 +100', rank: 3, c: '#ffeef6' },
+      // 传说（rank 4）
+      { e: '🧜', n: '美人鱼', w: 0.8, ds: '她说要带你逃离工位…', rank: 4, c: '#fdf0ff' },
+      { e: '🏝️', n: '一座小岛', w: 0.6, ds: '提桶跑路，财富自由！', rank: 4, c: '#fdf0ff' },
+      { e: '👑', n: '摸鱼王冠', w: 0.4, ds: '传说级！你就是摸鱼之王', rank: 4, c: '#fdf0ff' },
+    ];
+    const totalW = CATCHES.reduce((s, c) => s + c.w, 0);
+    function rollOnce() {
+      let r = Math.random() * totalW;
+      for (const c of CATCHES) { if ((r -= c.w) <= 0) return c; }
+      return CATCHES[0];
+    }
+    // 鱼竿等级越高，抛竿次数越多、取最稀有的一条（稀有率↑）
+    function pickCatch() {
+      const rolls = 1 + Math.floor((rod - 1) / 2);
+      let best = rollOnce();
+      for (let i = 1; i < rolls; i++) { const x = rollOnce(); if (x.rank > best.rank) best = x; }
+      return best;
+    }
+
+    /* 轻养成：摸鱼币 / 鱼竿 / 场景 */
+    let coins = +(localStorage.getItem('fish_coins') || 0);
+    let rod = +(localStorage.getItem('fish_rod') || 1);
+    let scene = +(localStorage.getItem('fish_scene') || 0);
+    function saveProg() { try { localStorage.setItem('fish_coins', coins); localStorage.setItem('fish_rod', rod); localStorage.setItem('fish_scene', scene); } catch (e) {} }
+    const RANK_TAG = ['普通', '常见', '优秀', '稀有', '传说']; // 稀有度标签
+    const RANK_COLOR = ['#b0b3b8', '#34c759', '#0a84ff', '#f5a623', '#a855f7'];
+    const COIN_BY_RANK = [1, 2, 5, 15, 50];       // 各稀有度的收益
+    const ROD_COST = [0, 0, 60, 180, 450, 1100];  // 升到 Lv.2~5 的花费
+    const SCENES = [
+      { name: '清晨鱼塘', emoji: '🌊', top: '#d4ecff', mid: '#8fc8f0', bot: '#3f93d6', wave: 'rgba(255,255,255,.3)', sun: 'rgba(255,255,210,.55)', ray: 'rgba(255,255,255,.05)' },
+      { name: '海边日落', emoji: '🌅', top: '#ffe1a8', mid: '#ff9d86', bot: '#e85a8c', wave: 'rgba(255,255,255,.34)', sun: 'rgba(255,230,170,.7)', ray: 'rgba(255,210,150,.06)' },
+      { name: '加班夜塘', emoji: '🌙', top: '#33446f', mid: '#1c2c54', bot: '#0c1530', wave: 'rgba(140,180,255,.3)', sun: 'rgba(190,210,255,.45)', ray: 'rgba(150,180,255,.05)' }
+    ];
+    const LEVELS = [
+      [0, '摸鱼新手'], [3, '摸鱼学徒'], [8, '摸鱼能手'], [15, '摸鱼大师'], [30, '带薪摸鱼之王'], [60, '鱼塘承包商']
+    ];
+    function levelName(n) { let name = LEVELS[0][1]; for (const [t, nm] of LEVELS) if (n >= t) name = nm; return name; }
+
+    // 本地存储（按天）
+    const todayKey = 'fish_' + new Date().toISOString().slice(0, 10);
+    const fish = { today: 0, best: null, bestRank: -1 };
+    (function load() {
+      try {
+        const raw = localStorage.getItem(todayKey);
+        if (raw) { const o = JSON.parse(raw); fish.today = o.today || 0; fish.best = o.best || null; fish.bestRank = o.bestRank ?? -1; }
+      } catch (e) {}
+      renderStats();
+    })();
+    function save() { try { localStorage.setItem(todayKey, JSON.stringify(fish)); } catch (e) {} }
+    function renderStats() {
+      todayCatchEl.textContent = fish.today;
+      bestCatchEl.textContent = fish.best ? fish.best : '—';
+      fishLvEl.textContent = levelName(fish.today);
+      const rl = $('rodLv'), cn = $('coins');
+      if (rl) rl.textContent = rod;
+      if (cn) cn.textContent = coins;
+    }
+
+    // 图鉴（全部时间收集，跨天保留）
+    const DEX_KEY = 'fish_dex';
+    let dex = {};
+    try { dex = JSON.parse(localStorage.getItem(DEX_KEY) || '{}'); } catch (e) { dex = {}; }
+    function saveDex() { try { localStorage.setItem(DEX_KEY, JSON.stringify(dex)); } catch (e) {} }
+
+    // 行为统计（用于个性化周报）
+    const STATS_KEY = 'fish_stats';
+    let stats = { casts: 0, hits: 0, early: 0, escaped: 0, junk: 0, rare: 0, daily: {} };
+    try { stats = Object.assign(stats, JSON.parse(localStorage.getItem(STATS_KEY) || '{}')); } catch (e) {}
+    if (!stats.daily) stats.daily = {};
+    function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {} }
+    function dateStr(d) { return d.toISOString().slice(0, 10); }
+
+    /* --- 画面：鱼塘 --- */
+    let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const swimmers = [];
+    function resize() {
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    const FISH_COLORS = [
+      { l: '#ff9d54', d: '#f06d1f', f: '#ffd9b0' }, // 锦鲤橙
+      { l: '#ffd23f', d: '#f5a200', f: '#fff0b8' }, // 金鱼黄
+      { l: '#7ec8ff', d: '#2f8fe0', f: '#cdeeff' }, // 蓝
+      { l: '#b39dff', d: '#7c5cf0', f: '#e4dbff' }, // 紫
+      { l: '#ff8fb0', d: '#ef5f8a', f: '#ffd6e2' }  // 粉
+    ];
+    const bubbles = [];
+    function initSwimmers() {
+      swimmers.length = 0;
+      for (let i = 0; i < 6; i++) {
+        swimmers.push({
+          x: Math.random() * W, y: 64 + Math.random() * (H - 92),
+          sp: 0.22 + Math.random() * 0.5, dir: Math.random() < .5 ? 1 : -1,
+          col: FISH_COLORS[i % FISH_COLORS.length],
+          size: 26 + Math.random() * 16, ph: Math.random() * 6.28
+        });
+      }
+      bubbles.length = 0;
+      for (let i = 0; i < 9; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: 1.5 + Math.random() * 3, sp: 0.25 + Math.random() * 0.5 });
+    }
+
+    // 矢量小鱼
+    function drawFish(x, y, size, dir, col, alpha) {
+      ctx.save();
+      ctx.translate(x, y); ctx.scale(dir, 1); ctx.globalAlpha = alpha;
+      // 阴影
+      ctx.fillStyle = 'rgba(0,0,0,.06)';
+      ctx.beginPath(); ctx.ellipse(0, size * 0.5, size * 0.5, size * 0.12, 0, 0, 6.29); ctx.fill();
+      const bg = ctx.createLinearGradient(0, -size * 0.4, 0, size * 0.4);
+      bg.addColorStop(0, col.l); bg.addColorStop(1, col.d);
+      // 尾巴
+      ctx.fillStyle = col.d;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.45, 0);
+      ctx.quadraticCurveTo(-size * 0.85, -size * 0.34, -size * 0.92, -size * 0.42);
+      ctx.quadraticCurveTo(-size * 0.66, 0, -size * 0.92, size * 0.42);
+      ctx.quadraticCurveTo(-size * 0.85, size * 0.34, -size * 0.45, 0);
+      ctx.fill();
+      // 上鳍
+      ctx.fillStyle = col.f;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.1, -size * 0.28);
+      ctx.quadraticCurveTo(size * 0.12, -size * 0.56, size * 0.26, -size * 0.26);
+      ctx.closePath(); ctx.fill();
+      // 身体
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.ellipse(0, 0, size * 0.55, size * 0.33, 0, 0, 6.29); ctx.fill();
+      // 腮纹
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = Math.max(1, size * 0.04);
+      ctx.beginPath(); ctx.arc(size * 0.1, 0, size * 0.28, -0.9, 0.9); ctx.stroke();
+      // 眼睛
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(size * 0.33, -size * 0.05, size * 0.1, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#23314d'; ctx.beginPath(); ctx.arc(size * 0.355, -size * 0.05, size * 0.05, 0, 6.29); ctx.fill();
+      ctx.restore();
+    }
+
+    // 游戏状态
+    let state = 'idle';      // idle | waiting | bite
+    let bobX = 0, bobBase = 0, bobDip = 0;
+    let biteTimer = null, escapeTimer = null, t = 0, running = false;
+
+    function drawLily(x, y, r, flower) {
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.beginPath(); ctx.ellipse(0, r * 0.28, r, r * 0.4, 0, 0, 6.29); ctx.fill();
+      const lg = ctx.createLinearGradient(0, -r, 0, r);
+      lg.addColorStop(0, '#7ed68a'); lg.addColorStop(1, '#3fae5a');
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.66, 0, 0.45, 6.29); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.66, 0, 0, 0.45); ctx.lineTo(0, 0); ctx.closePath(); ctx.fillStyle = '#5bc06f'; ctx.fill();
+      if (flower) {
+        ctx.fillStyle = '#ffd6e6';
+        for (let a = 0; a < 6; a++) { ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * 0.3 - r * 0.35, Math.sin(a) * r * 0.3 - r * 0.2, r * 0.22, r * 0.12, a, 0, 6.29); ctx.fill(); }
+        ctx.fillStyle = '#ffea9e'; ctx.beginPath(); ctx.arc(-r * 0.35, -r * 0.2, r * 0.14, 0, 6.29); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function draw() {
+      t += 0.03;
+      const sc = SCENES[scene] || SCENES[0];
+      // 水体渐变
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, sc.top); g.addColorStop(0.5, sc.mid || sc.top); g.addColorStop(1, sc.bot);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // 顶部光晕（太阳/月亮）
+      const sun = ctx.createRadialGradient(W * 0.78, 18, 4, W * 0.78, 18, 120);
+      sun.addColorStop(0, sc.sun); sun.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H);
+      // 光束
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = sc.ray;
+      for (let i = 0; i < 3; i++) {
+        const bx = W * (0.25 + i * 0.28) + Math.sin(t * 0.3 + i) * 8;
+        ctx.beginPath(); ctx.moveTo(bx, -10); ctx.lineTo(bx + 26, -10); ctx.lineTo(bx + 70, H); ctx.lineTo(bx + 4, H); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      // 水面波光
+      ctx.strokeStyle = sc.wave; ctx.lineWidth = 2;
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        const yy = 22 + k * 16;
+        for (let x = 0; x <= W; x += 8) ctx.lineTo(x, yy + Math.sin(x * 0.05 + t + k) * 3);
+        ctx.stroke();
+      }
+      // 气泡
+      ctx.fillStyle = 'rgba(255,255,255,.4)';
+      for (const b of bubbles) {
+        b.y -= b.sp; if (b.y < -4) { b.y = H + 4; b.x = Math.random() * W; }
+        ctx.beginPath(); ctx.arc(b.x + Math.sin(b.y * 0.05) * 4, b.y, b.r, 0, 6.29); ctx.fill();
+      }
+      // 游鱼（矢量）
+      for (const f of swimmers) {
+        f.x += f.sp * f.dir;
+        if (f.x > W + 40) f.x = -40; if (f.x < -40) f.x = W + 40;
+        const yy = f.y + Math.sin(t + f.ph) * 5;
+        drawFish(f.x, yy, f.size, f.dir, f.col, 0.92);
+      }
+      ctx.globalAlpha = 1;
+      // 睡莲（水面装饰）
+      drawLily(W * 0.16, 16, 26, true);
+      drawLily(W * 0.62, 12, 20, false);
+      // 浮漂 + 鱼线
+      if (state === 'waiting' || state === 'bite') {
+        bobBase = 40 + Math.sin(t * 1.5) * 3;
+        const by = bobBase + bobDip;
+        ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(bobX, 0); ctx.lineTo(bobX, by); ctx.stroke();
+        // 浮漂（带高光）
+        ctx.fillStyle = state === 'bite' ? '#ff375f' : '#ff453a';
+        ctx.beginPath(); ctx.arc(bobX, by, 8, 0, 6.29); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bobX, by - 2.5, 8, Math.PI, 6.29); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(bobX - 2.5, by - 3, 1.8, 0, 6.29); ctx.fill();
+        // 咬钩涟漪
+        if (state === 'bite') {
+          const r = (t * 30) % 26;
+          ctx.strokeStyle = `rgba(255,255,255,${1 - r / 26})`; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(bobX, by + 6, r + 4, 0, 6.29); ctx.stroke();
+          ctx.fillStyle = '#ffd23f'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('!', bobX, by - 22);
+        }
+      }
+      if (running) requestAnimationFrame(draw);
+    }
+
+    function setBtn(label, cls) { actBtn.textContent = label; actBtn.className = 'act-btn' + (cls ? ' ' + cls : ''); }
+
+    function castLine() {
+      stats.casts++; saveStats();
+      state = 'waiting'; bobX = W * (0.3 + Math.random() * 0.4); bobDip = 0;
+      setBtn('⏳ 等鱼上钩…（别急）', 'waiting');
+      catchBanner.className = 'catch-banner info';
+      catchBanner.innerHTML = '<span class="em">🎣</span><span class="meta"><span class="nm">已抛竿</span><br><span class="ds">静静等浮漂动…</span></span>';
+      const delay = 1500 + Math.random() * 4000;
+      biteTimer = setTimeout(onBite, delay);
+    }
+    function onBite() {
+      state = 'bite'; bobDip = 10;
+      setBtn('⚡ 提竿！快！', 'bite');
+      if (navigator.vibrate) navigator.vibrate(60);
+      // 反应窗口
+      escapeTimer = setTimeout(() => {
+        stats.escaped++; saveStats();
+        state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
+        catchBanner.className = 'catch-banner miss';
+        catchBanner.innerHTML = '<span class="em">💨</span><span class="meta"><span class="nm">跑啦…</span><br><span class="ds">手慢了，鱼溜了，再来一竿！</span></span>';
+      }, 1100);
+    }
+    // 记账：被主动钓 / 挂机 / 离线共用
+    function recordCatch(c) {
+      fish.today++;
+      dex[c.n] = (dex[c.n] || 0) + 1; saveDex();
+      stats.hits++;
+      if (c.rank === 0) stats.junk++;
+      if (c.rank >= 3) stats.rare++;
+      const tk = dateStr(new Date());
+      stats.daily[tk] = (stats.daily[tk] || 0) + 1;
+      saveStats();
+      coins += (COIN_BY_RANK[c.rank] || 1); saveProg();
+      if (c.rank > fish.bestRank) { fish.bestRank = c.rank; fish.best = c.e + ' ' + c.n; }
+      save(); renderStats();
+    }
+    function reelIn() {
+      const c = pickCatch();
+      recordCatch(c);
+      // 稀有度奖章 + 金光
+      catchPop.textContent = c.e;
+      catchPop.className = 'catch-pop' + (c.rank >= 4 ? ' r4' : c.rank >= 3 ? ' r3' : '');
+      void catchPop.offsetWidth; catchPop.classList.add('show');
+      if (c.rank >= 3) { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); confetti(); }
+      if (navigator.vibrate) navigator.vibrate(c.rank >= 3 ? [40, 50, 40, 50, 60] : [30, 40, 30]);
+      catchBanner.className = 'catch-banner r' + c.rank;
+      catchBanner.innerHTML = `<span class="em">${c.e}</span><span class="meta"><span class="nm">${c.n}<span class="tag">${RANK_TAG[c.rank]}</span></span><br><span class="ds">${c.ds}</span></span>`;
+      buddyReact(c);
+    }
+
+    actBtn.addEventListener('click', () => {
+      if (state === 'idle') { castLine(); }
+      else if (state === 'bite') {
+        clearTimeout(escapeTimer); state = 'idle'; bobDip = 0; setBtn('🎣 抛竿'); reelIn();
+      } else if (state === 'waiting') {
+        // 心急空军
+        clearTimeout(biteTimer); stats.early++; saveStats();
+        state = 'idle'; bobDip = 0; setBtn('🎣 抛竿');
+        catchBanner.className = 'catch-banner miss';
+        catchBanner.innerHTML = '<span class="em">🫧</span><span class="meta"><span class="nm">空军了</span><br><span class="ds">心急钓不到鱼，沉住气~</span></span>';
+      }
+    });
+
+    /* --- 图鉴 / 晒战绩弹层 --- */
+    const modal = $('modal'), sheetTitle = $('sheetTitle'), sheetBody = $('sheetBody'), modalClose = $('modalClose');
+    function openModal(title) { sheetTitle.textContent = title; modal.classList.add('show'); }
+    function closeModal() { modal.classList.remove('show'); }
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    $('dexBtn').addEventListener('click', () => {
+      const got = CATCHES.filter((c) => dex[c.n]).length;
+      let html = `<div class="dex-sub">已解锁 ${got}/${CATCHES.length} 种 · 钓到新鱼种自动收录，集齐成为鱼塘承包商 🏆</div><div class="dex-grid">`;
+      for (const c of CATCHES) {
+        const has = dex[c.n]; const rc = RANK_COLOR[c.rank];
+        html += `<div class="dex-item ${has ? '' : 'locked'}"${has ? ` style="--rk:${rc};border-color:${rc}55;"` : ''}><div class="de">${has ? c.e : '❓'}</div><div class="dn">${has ? c.n : '未解锁'}</div>${has ? `<div class="rk">${RANK_TAG[c.rank]}</div><div class="dn" style="color:var(--muted);font-weight:400;margin-top:4px;">×${dex[c.n]}</div>` : ''}</div>`;
+      }
+      html += '</div>';
+      sheetBody.innerHTML = html;
+      openModal('📖 摸鱼图鉴');
+    });
+
+    $('shareBtn').addEventListener('click', () => {
+      const url = buildShareImage();
+      sheetBody.innerHTML = `<img class="share-card" src="${url}" alt="今日摸鱼战绩" /><div class="share-tip">长按上图保存到相册，再发朋友圈 / 微信群晒战绩 🎣</div>`;
+      openModal('📸 今日摸鱼战绩');
+    });
+
+    // 个性化摸鱼周报
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function genReportLines() {
+      const days = [];
+      for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(dateStr(d)); }
+      const weekCount = days.reduce((s, k) => s + (stats.daily[k] || 0), 0);
+      const activeDays = days.filter((k) => stats.daily[k]).length;
+      const hitRate = stats.casts ? Math.round(stats.hits / stats.casts * 100) : 0;
+      const speciesGot = CATCHES.filter((c) => dex[c.n]).length;
+      const lines = [];
+
+      lines.push(['🐟', `本周累计摸鱼 <b>${weekCount}</b> 条，约等于少写了 <b>${Math.max(1, Math.round(weekCount / 3))}</b> 份周报`]);
+      lines.push(['📅', `7 天里有 <b>${activeDays}</b> 天在摸 —— ${activeDays >= 5 ? '摸鱼出勤率满分 ✅' : activeDays >= 3 ? '划水频率良好 👍' : '还能再放肆一点 💪'}`]);
+      lines.push(['🎯', `出竿 <b>${stats.casts}</b> 次，命中率 <b>${hitRate}%</b> —— ${hitRate >= 70 ? '手速惊人，建议转行职业钓手' : hitRate >= 40 ? '中规中矩，稳住别浪' : '空军大队队长，非你莫属'}`]);
+      if (stats.escaped) lines.push(['💨', `<b>${stats.escaped}</b> 条鱼从你指缝溜走，建议挂个眼科顺便看看手速`]);
+      if (stats.junk) lines.push(['🗑️', `捞上来 <b>${stats.junk}</b> 件晦气（周报 / KPI / 老板@你…），上班人含金量拉满 🫠`]);
+      if (stats.rare) lines.push(['✨', `钓到 <b>${stats.rare}</b> 次稀有货，这班上得有排面`]);
+      lines.push(['📖', `图鉴解锁 <b>${speciesGot}/${CATCHES.length}</b> 种（${Math.round(speciesGot / CATCHES.length * 100)}%）${speciesGot === CATCHES.length ? '，全图鉴！鱼塘承包商本商 🏆' : ''}`]);
+      if (fish.best) lines.push(['🏅', `本期最佳渔获：<b>${fish.best}</b>`]);
+
+      // 个性化称号
+      let title, sub;
+      if (speciesGot === CATCHES.length) { title = '鱼塘承包商 🏝️'; sub = '这片海，你说了算'; }
+      else if (stats.rare >= 3) { title = '欧皇渔夫 🍀'; sub = '稀有鱼见了你都想上钩'; }
+      else if (stats.junk > Math.max(3, stats.hits * 0.5)) { title = '晦气捕手 💀'; sub = '专钓周报与 KPI，建议转运'; }
+      else if (stats.early > stats.hits) { title = '心急钓鱼侠 ⚡'; sub = '浮漂还没动你就提竿了'; }
+      else if (stats.escaped > Math.max(2, stats.hits * 0.4)) { title = '漏鱼之手 🕳️'; sub = '鱼：就喜欢看你扑空'; }
+      else if (weekCount >= 30) { title = '资深摸鱼人 🐟'; sub = '带薪摸鱼，重在坚持'; }
+      else if (stats.casts < 5) { title = '摸鱼萌新 🐣'; sub = '才刚下水，前途无量'; }
+      else { title = '佛系摸鱼人 🧘'; sub = '钓多钓少，开心就好'; }
+
+      const soup = pick([
+        '钓鱼穷三年，摸鱼富一生。',
+        '工位是暂时的，鱼塘是永恒的。',
+        '今天的鱼没摸够？明天继续。',
+        '上班如上坟，摸鱼是上香。',
+        '老板画的饼，不如塘里的鱼。'
+      ]);
+      return { lines, title, sub, soup };
+    }
+    $('reportBtn').addEventListener('click', () => {
+      const r = genReportLines();
+      let html = `<div class="rep-sub">根据你的摸鱼行为生成 · ${new Date().toLocaleDateString('zh-CN')}</div>`;
+      for (const [ic, tx] of r.lines) html += `<div class="rep-line"><span class="ic">${ic}</span><span>${tx}</span></div>`;
+      html += `<div class="rep-badge"><div class="bt">你的摸鱼人格</div><div class="bn">${r.title}</div><div class="bt" style="margin-top:6px;">${r.sub}</div></div>`;
+      html += `<div class="share-tip">「${r.soup}」</div>`;
+      sheetBody.innerHTML = html;
+      openModal('📈 本周摸鱼周报');
+    });
+
+    // 老板键
+    const bossScreen = $('bossScreen'), bossHint = $('bossHint');
+    let hintTimer = null;
+    function showBoss() {
+      bossScreen.classList.add('show'); bossHint.style.opacity = '1';
+      clearTimeout(hintTimer); hintTimer = setTimeout(() => { bossHint.style.opacity = '0'; }, 1800);
+    }
+    function hideBoss() { bossScreen.classList.remove('show'); }
+    $('bossKey').addEventListener('click', showBoss);
+    bossScreen.addEventListener('click', hideBoss);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === '`') { e.preventDefault(); bossScreen.classList.contains('show') ? hideBoss() : showBoss(); }
+    });
+
+    /* ===== 陪钓搭子 + 挂机摸鱼 ===== */
+    const buddySayEl = $('buddySay'), idlePop = $('idlePop');
+    const BUDDY = [
+      '老板不看的时候，海阔凭鱼跃 🌊',
+      '工位是租来的，摸鱼是自己的。',
+      '急啥？鱼不会跑，你的 KPI 才会。',
+      '你摸鱼，我盯梢，配合默契 😼',
+      '今天的鱼，比今天的活儿有意思。',
+      '钓不到大的，摸条小的也快乐。',
+      '带薪钓鱼，越钓越有 💰',
+      '周报？等下班再说。',
+      '深呼吸，假装在思考工作 😌',
+      '摸鱼一时爽，一直摸鱼一直爽。'
+    ];
+    function buddySet(t) { if (buddySayEl) buddySayEl.textContent = t; }
+    function buddyReact(c) {
+      if (c.rank >= 4) buddySet('我滴妈！传说级！今天可以提桶跑路了 🏝️');
+      else if (c.rank >= 3) buddySet('哟，稀有货，上班有排面了 ✨');
+      else if (c.rank === 0) buddySet(pick(['晦气，赶紧扔回去！', '又是这种东西…叹气 🫠']));
+      else buddySet(pick(['不错不错，继续摸 🐟', '再来一条~', '稳住，别让老板发现']));
+    }
+    buddySet(pick(BUDDY));
+    setInterval(() => { if (running && state === 'idle') buddySet(pick(BUDDY)); }, 6500);
+
+    // 挂机自动摸鱼（搭子帮你钓，常见为主）
+    const idlePool = CATCHES.filter((c) => c.rank <= 2);
+    const idleW = idlePool.reduce((s, c) => s + c.w, 0);
+    function pickIdleCatch() { let r = Math.random() * idleW; for (const c of idlePool) { if ((r -= c.w) <= 0) return c; } return idlePool[0]; }
+    function idleInterval() { return Math.max(12000, 30000 - rod * 3000); } // 鱼竿越高，挂机越快
+    function idleTick() {
+      if (running && state === 'idle') {
+        const c = pickIdleCatch(); recordCatch(c);
+        if (idlePop) { idlePop.textContent = '+' + c.e; idlePop.classList.remove('go'); void idlePop.offsetWidth; idlePop.classList.add('go'); }
+      }
+      setTimeout(idleTick, idleInterval());
+    }
+    setTimeout(idleTick, idleInterval());
+
+    // 离线挂机奖励
+    const SEEN_KEY = 'fish_lastSeen';
+    function saveSeen() { try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch (e) {} }
+    window.addEventListener('pagehide', saveSeen);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveSeen(); });
+    setInterval(saveSeen, 15000);
+    function fmtDur(min) { return min >= 60 ? `${Math.floor(min / 60)} 小时 ${Math.floor(min % 60)} 分` : `${Math.max(1, Math.floor(min))} 分钟`; }
+    function offlineReward() {
+      let last = 0; try { last = parseInt(localStorage.getItem(SEEN_KEY) || '0', 10); } catch (e) {}
+      saveSeen();
+      if (!last) return;
+      const min = (Date.now() - last) / 60000;
+      if (min < 5) return;
+      const n = Math.min(30, Math.floor(min / 3));
+      if (n < 1) return;
+      const got = {};
+      for (let i = 0; i < n; i++) { const c = pickIdleCatch(); recordCatch(c); if (!got[c.n]) got[c.n] = { e: c.e, n: c.n, ct: 0 }; got[c.n].ct++; }
+      let html = `<div class="rep-sub">你离开的 <b>${fmtDur(min)}</b> 里，摸鱼搭子 🐱 帮你偷偷钓到了 <b>${n}</b> 条！</div><div class="dex-grid">`;
+      for (const k in got) { const g = got[k]; html += `<div class="dex-item"><div class="de">${g.e}</div><div class="dn">${g.n}</div><div class="dn" style="color:var(--muted);font-weight:400;">×${g.ct}</div></div>`; }
+      html += `</div><button class="act-btn" id="claimBtn" style="margin-top:16px;">🎁 一键领取</button>`;
+      sheetBody.innerHTML = html;
+      openModal('🐱 挂机摸鱼成果');
+      const cb = $('claimBtn'); if (cb) cb.addEventListener('click', () => { closeModal(); if (navigator.vibrate) navigator.vibrate(40); });
+    }
+    offlineReward();
+
+    /* ===== 摸鱼商店：鱼竿升级 + 场景切换 ===== */
+    function renderShop() {
+      let html = `<div class="shop-wallet">
+        <div class="shop-chip"><div class="cl">摸鱼币</div><div class="cv">🪙 ${coins}</div></div>
+        <div class="shop-chip rod"><div class="cl">鱼竿等级</div><div class="cv">🎣 Lv.${rod}</div></div>
+      </div>`;
+      html += `<div class="rod-card"><div class="rod-dots">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= rod ? 'on' : ''}"></i>`).join('')}</div>`;
+      if (rod >= 5) {
+        html += `<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5;">鱼竿已满级 <b style="color:var(--text)">Lv.5</b> — 稀有率与挂机速度拉满！🏆</div>`;
+      } else {
+        const cost = ROD_COST[rod + 1];
+        const ok = coins >= cost;
+        html += `<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5;">升到 <b style="color:var(--text)">Lv.${rod + 1}</b>：抛竿命中更多稀有鱼，挂机更快</div>`;
+        html += `<button class="act-btn" id="rodUp" ${ok ? '' : 'disabled'} style="margin-top:13px;${ok ? '' : 'opacity:.5;'}">${ok ? `🔨 升级鱼竿　-🪙${cost}` : `🪙 还差 ${cost - coins} 币`}</button>`;
+      }
+      html += `</div>`;
+      html += `<div class="shop-title">🏞️ 鱼塘场景</div><div class="scene-row">`;
+      SCENES.forEach((s, i) => { html += `<div class="scene-item ${i === scene ? 'on' : ''}" data-s="${i}">${s.emoji}<div>${s.name}</div></div>`; });
+      html += `</div>`;
+      sheetBody.innerHTML = html;
+      openModal('🎒 摸鱼商店');
+      const ru = $('rodUp');
+      if (ru) ru.addEventListener('click', () => {
+        const cost = ROD_COST[rod + 1];
+        if (coins >= cost) { coins -= cost; rod++; saveProg(); renderStats(); renderShop(); if (navigator.vibrate) navigator.vibrate([40, 40, 60]); }
+      });
+      document.querySelectorAll('.scene-item').forEach((el) => el.addEventListener('click', () => {
+        scene = +el.dataset.s; saveProg(); renderShop();
+      }));
+    }
+    $('shopBtn').addEventListener('click', renderShop);
+
+    function roundRect(c, x, y, w, h, r) {
+      c.beginPath(); c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+    }
+    function buildShareImage() {
+      const w = 600, h = 820, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const x = cv.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#cdeafe'); g.addColorStop(1, '#a5c8ff');
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      roundRect(x, 44, 80, w - 88, h - 170, 34); x.fillStyle = 'rgba(255,255,255,.94)'; x.fill();
+      x.textAlign = 'center';
+      x.fillStyle = '#1d1d1f'; x.font = 'bold 48px sans-serif'; x.fillText('🎣 今日摸鱼战绩', w / 2, 185);
+      x.fillStyle = '#86868b'; x.font = '24px sans-serif'; x.fillText(new Date().toLocaleDateString('zh-CN'), w / 2, 230);
+      x.fillStyle = '#34c759'; x.font = 'bold 36px sans-serif'; x.fillText(levelName(fish.today), w / 2, 308);
+      x.fillStyle = '#0071e3'; x.font = 'bold 140px sans-serif'; x.fillText(String(fish.today), w / 2, 470);
+      x.fillStyle = '#86868b'; x.font = '28px sans-serif'; x.fillText('条渔获', w / 2, 515);
+      x.fillStyle = '#1d1d1f'; x.font = '30px sans-serif'; x.fillText('今日最佳：' + (fish.best || '暂无'), w / 2, 600);
+      x.fillStyle = '#86868b'; x.font = '24px sans-serif'; x.fillText('带薪摸鱼，快乐工作 🐟', w / 2, 670);
+      x.fillStyle = '#b0b0b5'; x.font = '22px sans-serif'; x.fillText('—— 摸鱼计时器 ——', w / 2, h - 55);
+      return cv.toDataURL('image/png');
+    }
+
+    fishToggle.addEventListener('change', () => {
+      if (fishToggle.checked) {
+        fishCard.style.display = 'block';
+        requestAnimationFrame(() => {
+          resize(); initSwimmers(); running = true; draw();
+          fishCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      } else {
+        running = false; fishCard.style.display = 'none';
+        clearTimeout(biteTimer); clearTimeout(escapeTimer); state = 'idle'; setBtn('🎣 抛竿');
+      }
+    });
+    window.addEventListener('resize', () => { if (running) { resize(); initSwimmers(); } });
+
+    calculate();
+  </script>
+</body>
+</html>

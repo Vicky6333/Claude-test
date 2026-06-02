@@ -1,0 +1,161 @@
+.wrap {
+  position: relative;
+  min-height: 100vh;
+  padding: 48rpx 32rpx;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 背景柔光球 */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(70rpx);
+  opacity: .5;
+  z-index: 0;
+  animation: float 14s ease-in-out infinite;
+}
+.b1 { width: 460rpx; height: 460rpx; background: #a5c8ff; top: -80rpx; left: -60rpx; }
+.b2 { width: 420rpx; height: 420rpx; background: #ffc0dd; bottom: -90rpx; right: -50rpx; animation-delay: -5s; }
+.b3 { width: 340rpx; height: 340rpx; background: #c9b8ff; bottom: 80rpx; left: -90rpx; animation-delay: -9s; }
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-34rpx) scale(1.06); }
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .82);
+  border-radius: 40rpx;
+  padding: 44rpx 40rpx;
+  box-shadow: 0 18rpx 60rpx rgba(0, 0, 0, .12);
+  border: 1rpx solid rgba(255, 255, 255, .7);
+  animation: popin .55s cubic-bezier(.16, 1, .3, 1);
+}
+@keyframes popin {
+  from { opacity: 0; transform: translateY(24rpx) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.title {
+  font-size: 42rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+}
+.clock {
+  display: inline-block;
+  font-size: 44rpx;
+  margin-right: 14rpx;
+  animation: tick 2.2s ease-in-out infinite;
+}
+@keyframes tick {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(9deg); }
+}
+.subtitle { color: #86868b; font-size: 26rpx; margin: 12rpx 0 36rpx; }
+
+.row { display: flex; }
+.row .field { flex: 1; }
+.row .field + .field { margin-left: 22rpx; }
+.field { margin-bottom: 28rpx; }
+.label { font-size: 24rpx; color: #86868b; margin-bottom: 14rpx; font-weight: 500; }
+
+.input, .picker {
+  height: 92rpx;
+  line-height: 64rpx;
+  padding: 14rpx 28rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-size: 30rpx;
+}
+.picker { color: #1d1d1f; }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin: 12rpx 0 32rpx;
+}
+
+.wage { animation: popin .3s ease; }
+.tip { color: #86868b; font-size: 22rpx; line-height: 1.5; margin-top: -8rpx; }
+
+.result {
+  margin-top: 8rpx;
+  padding: 40rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(135deg, rgba(0, 113, 227, .09), rgba(88, 86, 214, .07));
+  border: 1rpx solid rgba(0, 113, 227, .16);
+  text-align: center;
+  transition: background .4s;
+}
+.result.done {
+  background: linear-gradient(135deg, rgba(52, 199, 89, .14), rgba(48, 209, 88, .08));
+  border-color: rgba(52, 199, 89, .3);
+}
+.cap { font-size: 24rpx; color: #86868b; font-weight: 500; }
+.offtime {
+  font-size: 80rpx;
+  font-weight: 700;
+  letter-spacing: -2rpx;
+  color: #0071e3;
+  margin: 10rpx 0 4rpx;
+  animation: numpop .42s cubic-bezier(.16, 1, .3, 1);
+}
+.result.done .offtime { color: #34c759; }
+.next { font-size: 28rpx; color: #86868b; font-weight: 500; }
+@keyframes numpop {
+  0% { transform: scale(.8); opacity: .5; }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.countdown { font-size: 28rpx; color: #0071e3; margin-top: 12rpx; font-weight: 500; }
+.countdown.celebrate {
+  color: #34c759;
+  font-weight: 600;
+  font-size: 32rpx;
+  animation: bounce .6s ease infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12rpx); }
+}
+
+.wageline {
+  margin-top: 22rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx dashed rgba(0, 0, 0, .12);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 26rpx;
+}
+.wageline .k { color: #86868b; font-weight: 500; }
+.wageline .v { color: #0071e3; font-weight: 700; font-size: 30rpx; }
+
+.hint { color: #86868b; font-size: 24rpx; text-align: center; margin-top: 24rpx; }
+.footer { color: #86868b; font-size: 22rpx; text-align: center; margin-top: 30rpx; }
+
+/* 撒花 */
+.confetti {
+  position: fixed;
+  top: -30rpx;
+  width: 16rpx;
+  height: 28rpx;
+  border-radius: 4rpx;
+  z-index: 50;
+  animation: fall 2.1s linear forwards;
+}
+@keyframes fall {
+  to { transform: translateY(110vh) rotate(560deg); opacity: .85; }
+}

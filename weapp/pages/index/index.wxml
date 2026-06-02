@@ -1,0 +1,65 @@
+<view class="wrap">
+  <view class="blob b1"></view>
+  <view class="blob b2"></view>
+  <view class="blob b3"></view>
+
+  <view class="card">
+    <view class="title"><text class="clock">⏰</text> 下钟计时器</view>
+    <view class="subtitle">输入上班时间和坐班时长，自动算出下班时间</view>
+
+    <view class="row">
+      <view class="field">
+        <view class="label">上班时间</view>
+        <picker mode="time" value="{{startTime}}" bindchange="onStartChange">
+          <view class="picker">{{startTime}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <view class="label">坐班时长（小时）</view>
+        <input class="input" type="digit" value="{{hours}}" placeholder="如 8" bindinput="onHoursInput" />
+      </view>
+    </view>
+
+    <view class="toggle">
+      <text>算一算时薪 💰</text>
+      <switch checked="{{wageOn}}" color="#34c759" bindchange="onWageToggle" />
+    </view>
+
+    <view class="wage" wx:if="{{wageOn}}">
+      <view class="field">
+        <view class="label">月薪（元）</view>
+        <input class="input" type="digit" value="{{salary}}" placeholder="如 10000" bindinput="onSalaryInput" />
+      </view>
+      <view class="row">
+        <view class="field">
+          <view class="label">月份</view>
+          <picker mode="date" fields="month" value="{{month}}" bindchange="onMonthChange">
+            <view class="picker">{{month}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <view class="label">本月工作天数</view>
+          <input class="input" type="number" value="{{workDays}}" bindinput="onWorkDaysInput" />
+        </view>
+      </view>
+      <view class="tip">工作天数已按所选月份的工作日（周一~周五）自动填入，可手动改（扣除节假日 / 调休）</view>
+    </view>
+
+    <view class="result {{done ? 'done' : ''}}">
+      <view class="cap">预计下班时间</view>
+      <view class="offtime">{{offTime}}<text class="next" wx:if="{{crossDay}}"> （次日）</text></view>
+      <view class="countdown {{done ? 'celebrate' : ''}}">{{countdown}}</view>
+      <view class="wageline" wx:if="{{wageOn && showWage}}">
+        <text class="k">日薪</text><text class="v">{{dayWage}}</text>
+      </view>
+      <view class="wageline" wx:if="{{wageOn && showWage}}">
+        <text class="k">时薪</text><text class="v">{{hourWage}}</text>
+      </view>
+    </view>
+    <view class="hint">{{hint}}</view>
+    <view class="footer">下班快乐 🎉</view>
+  </view>
+
+  <view class="confetti" wx:for="{{confetti}}" wx:key="id"
+        style="left:{{item.left}}vw;background:{{item.color}};animation-delay:{{item.delay}}s;"></view>
+</view>
