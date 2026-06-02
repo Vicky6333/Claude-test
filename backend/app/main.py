@@ -9,7 +9,7 @@ from .database import engine, SessionLocal, Base
 from . import models
 from .auth import get_password_hash
 from .seed import seed_demo_data
-from .routers import auth, projects, materials, topics, submissions
+from .routers import auth, projects, materials, topics, submissions, talent
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,6 +28,7 @@ app.include_router(projects.router)
 app.include_router(materials.router)
 app.include_router(topics.router)
 app.include_router(submissions.router)
+app.include_router(talent.router)
 
 
 @app.on_event("startup")

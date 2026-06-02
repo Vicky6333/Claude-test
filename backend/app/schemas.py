@@ -246,6 +246,29 @@ class SubmissionOut(BaseModel):
         from_attributes = True
 
 
+# ── Talent Detector（天赋探测仪，免登录）────────────────────────────────────────
+
+class TalentReflections(BaseModel):
+    flow: Optional[str] = None          # 做什么会忘记时间
+    asked_for: Optional[str] = None     # 别人常找你帮的忙
+    proud_moment: Optional[str] = None  # 最有成就感的高光时刻
+
+class TalentReportCreate(BaseModel):
+    nickname: Optional[str] = None
+    childhood_skills: List[str] = []
+    reflections: Optional[TalentReflections] = None
+
+class TalentReportOut(BaseModel):
+    id: UUID
+    nickname: Optional[str]
+    inputs: Any
+    result: Any
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ── Dashboard Stats ───────────────────────────────────────────────────────────
 
 class ProjectStats(BaseModel):

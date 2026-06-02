@@ -3,10 +3,18 @@ import os
 import re
 from openai import OpenAI
 
-client = OpenAI(
-    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-    base_url="https://api.deepseek.com",
-)
+_client = None
+
+
+def _get_client() -> OpenAI:
+    """延迟创建 OpenAI 客户端。缺少 API key 时抛错，由调用方走降级兜底。"""
+    global _client
+    if _client is None:
+        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("DEEPSEEK_API_KEY 未配置")
+        _client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    return _client
 
 MODEL = "deepseek-chat"
 
@@ -47,7 +55,7 @@ SYSTEM_PROMPT = """你是一位零售商品传播领域的专业顾问，擅长�
 
 
 def _call(system: str, user: str, max_tokens: int = 2000) -> str:
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model=MODEL,
         max_tokens=max_tokens,
         messages=[
@@ -186,3 +194,130 @@ def evaluate_acceptance(submission_data: dict, topic_data: dict, project_data: d
         return json.loads(raw_text)
     except json.JSONDecodeError:
         return {"mind_penetration": raw_text[:300], "overall_grade": "C", "grade_reason": "解析失败", "suggestions": []}
+
+
+# ── 天赋探测仪 ──────────────────────────────────────────────────────────────────
+
+TALENT_SYSTEM_PROMPT = """你是一位温暖、有洞察力的天赋与职业教练，擅长帮人度过「奥德赛时期」——
+那段二三十岁常见的探索、漂泊、迷茫、反复怀疑自己的人生阶段。
+
+你的信念：每个人小时候自然擅长、乐在其中的事，藏着他一生的天赋线索。你的工作是把这些线索
+翻译成「被看见」的语言，让对方在 AI 时代的焦虑（AI FOMO）里，重新找到属于自己的赛道和出口。
+
+【语气与原则】
+- 第二人称「你」，温暖、真诚、具体，像一位懂你的朋友，而不是测评机器。
+- 多用对方填写的真实细节作为证据，让他感到「真的被读懂了」。
+- 既给方向，也给情绪价值：哪怕暂时找不到完美职业，也要让对方感到被接住、有下一步可走。
+- 谈 AI 时代时，强调「人的天赋如何与 AI 协作放大」，而不是制造恐慌。
+- 不输出空洞鸡汤，每条建议都要可落地、有出口（哪怕是低门槛的小尝试）。
+
+输出必须是严格的 JSON，不包含任何额外文字或 markdown 代码块。"""
+
+
+def build_talent_prompt(inputs: dict) -> str:
+    skills = [s for s in (inputs.get("childhood_skills") or []) if str(s).strip()]
+    skills_text = "\n".join(f"{i + 1}. {s}" for i, s in enumerate(skills)) or "（未填写）"
+
+    reflections = inputs.get("reflections") or {}
+    flow = reflections.get("flow") or "（未填写）"
+    asked_for = reflections.get("asked_for") or "（未填写）"
+    proud = reflections.get("proud_moment") or "（未填写）"
+
+    nickname = inputs.get("nickname") or "朋友"
+
+    return f"""[探测对象] {nickname}
+
+[Ta 小时候最擅长的事]
+{skills_text}
+
+[补充反思]
+- 做什么会忘记时间：{flow}
+- 别人常找 Ta 帮的忙：{asked_for}
+- 最有成就感的高光时刻：{proud}
+
+[任务]
+基于以上线索，提炼天赋、对应 AI 时代职业赛道，并给出情绪陪伴叙事。
+严格输出以下 JSON（字符串用双引号，分值为 0-100 的整数，不加引号）：
+
+{{
+  "talent_themes": [
+    {{
+      "name": "天赋主题名（4-8字，如：结构化思维 / 共情联结 / 创造表达）",
+      "strength": 0-100,
+      "one_liner": "一句话点明这个天赋是什么",
+      "evidence": ["呼应 Ta 填写的具体某件事，说明为何体现该天赋", "另一条证据"]
+    }}
+  ],
+  "career_tracks": [
+    {{
+      "title": "职业/赛道名",
+      "fit": 0-100,
+      "why": "为什么这条赛道契合 Ta 的天赋",
+      "ai_era_angle": "在 AI 时代，这条赛道为何有潜力、Ta 的天赋如何与 AI 协作被放大",
+      "first_steps": ["现在就能做的第一步", "第二步"],
+      "exits": ["低门槛的小出口/小尝试，哪怕只是先体验或获得情绪价值"]
+    }}
+  ],
+  "odyssey_narrative": "一段 150-250 字的温暖第二人称叙事，正向回应 Ta 此刻的迷茫，串联 Ta 的天赋成长轨迹，给出被接住的感觉和方向感",
+  "share_card": {{
+    "headline": "一句有力量、适合转发的天赋金句（不超过 20 字）",
+    "top_talents": ["核心天赋1", "核心天赋2", "核心天赋3"],
+    "signature_track": "Ta 的主赛道（一个短语）"
+  }}
+}}
+
+要求：talent_themes 给 3-5 个，career_tracks 给 3-4 个（按 fit 从高到低排序）。"""
+
+
+def _talent_fallback(inputs: dict, raw_text: str = "") -> dict:
+    """AI 不可用或解析失败时的降级结果：仍保证结构合法、仍有情绪价值。"""
+    skills = [s for s in (inputs.get("childhood_skills") or []) if str(s).strip()]
+    sample = "、".join(skills[:3]) if skills else "你愿意分享的那些事"
+    return {
+        "talent_themes": [
+            {
+                "name": "尚待解读的天赋",
+                "strength": 60,
+                "one_liner": "你填写的经历里藏着清晰的天赋线索，只是这次没能连上 AI 完成解读。",
+                "evidence": [f"你提到的「{sample}」就是很好的起点"],
+            }
+        ],
+        "career_tracks": [
+            {
+                "title": "先从一次小探索开始",
+                "fit": 60,
+                "why": "在还没有完整画像时，最好的方向是用低成本的行动继续收集关于自己的线索。",
+                "ai_era_angle": "AI 时代最稀缺的，是清楚自己天赋、并愿意持续尝试的人。",
+                "first_steps": ["把你最有感觉的 1 件事，本周做一次小练习", "记录做的时候的状态和能量"],
+                "exits": ["稍后重新生成一次报告", "找一位朋友聊聊你填的这 20 件事"],
+            }
+        ],
+        "odyssey_narrative": (
+            "此刻的迷茫不是你出了问题，而是你正认真地寻找属于自己的赛道。"
+            "你愿意回看小时候真正擅长、真正快乐的事，这本身就是一种难得的自我诚实。"
+            "线索已经在你手里了——给自己一点时间，下一步会慢慢清晰起来。"
+        ),
+        "share_card": {
+            "headline": "我正在认真寻找属于自己的赛道",
+            "top_talents": ["自我觉察", "持续探索", "真诚"],
+            "signature_track": "正在路上的探索者",
+        },
+        "_raw": raw_text,
+        "_degraded": True,
+    }
+
+
+def analyze_talent(inputs: dict) -> dict:
+    """根据用户输入分析天赋，返回 {result, raw}。AI 失败时走降级兜底。"""
+    prompt = build_talent_prompt(inputs)
+    try:
+        raw_text = _call(TALENT_SYSTEM_PROMPT, prompt, max_tokens=2500)
+    except Exception:
+        return {"result": _talent_fallback(inputs), "raw": ""}
+
+    try:
+        result = json.loads(raw_text)
+    except json.JSONDecodeError:
+        result = _talent_fallback(inputs, raw_text)
+
+    return {"result": result, "raw": raw_text}

@@ -9,6 +9,7 @@ import TopicsPage from './pages/TopicsPage'
 import TopicDetailPage from './pages/TopicDetailPage'
 import SubmissionsPage from './pages/SubmissionsPage'
 import RetrospectivePage from './pages/RetrospectivePage'
+import TalentApp from './pages/talent/TalentApp'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 function PrivateRoutes() {
@@ -36,6 +37,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/talent/*" element={<TalentApp />} />
         <Route path="/*" element={<PrivateRoutes />} />
       </Routes>
     </AuthProvider>
