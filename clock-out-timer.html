@@ -98,10 +98,17 @@
     .pond-wrap { position: relative; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 12px rgba(0, 0, 0, .12); }
     #pond { display: block; width: 100%; height: 210px; }
     .catch-pop {
-      position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(.4);
-      font-size: 60px; opacity: 0; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+      position: absolute; left: 50%; top: 34%;
+      width: 110px; height: 110px; border-radius: 50%;
+      background: radial-gradient(circle at 50% 36%, #ffffff, #eef3f8);
+      border: 4px solid #fff; box-shadow: 0 12px 30px rgba(0, 0, 0, .22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px; line-height: 1; opacity: 0; pointer-events: none;
+      transform: translate(-50%, -50%) scale(.4);
     }
-    .catch-pop.show { animation: catchpop 1.3s ease forwards; }
+    .catch-pop.r3 { border-color: #ffc24d; box-shadow: 0 0 0 6px rgba(255, 194, 77, .28), 0 12px 30px rgba(0, 0, 0, .22); }
+    .catch-pop.r4 { border-color: #c77dff; box-shadow: 0 0 0 7px rgba(199, 125, 255, .34), 0 12px 34px rgba(0, 0, 0, .26); }
+    .catch-pop.show { animation: catchpop 1.5s ease forwards; }
     @keyframes catchpop {
       0% { opacity: 0; transform: translate(-50%, -10%) scale(.3); }
       25% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
@@ -277,7 +284,28 @@
         <div class="flash" id="flash"></div>
         <div class="catch-pop" id="catchPop"></div>
         <div class="idle-pop" id="idlePop">+🐟</div>
-        <div class="buddy"><span class="av">🐱</span><span class="bubble" id="buddySay">…</span></div>
+        <div class="buddy">
+          <svg class="av" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
+            <ellipse cx="30" cy="50" rx="16" ry="12" fill="#ffb86b"/>
+            <path d="M44 52 q12 2 9 -11" stroke="#ffb86b" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M17 22 L15 9 L27 18 Z" fill="#ffc888"/>
+            <path d="M39 22 L41 9 L29 18 Z" fill="#ffc888"/>
+            <path d="M18.5 19 L17.5 12.5 L23 16.5 Z" fill="#ff9bb0"/>
+            <path d="M37.5 19 L38.5 12.5 L33 16.5 Z" fill="#ff9bb0"/>
+            <circle cx="28" cy="30" r="14" fill="#ffc888"/>
+            <path d="M24 18 l1.5 6 M28 17.5 l0 6.5 M32 18 l-1.5 6" stroke="#f59b53" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+            <circle cx="23" cy="31" r="2.3" fill="#3a2a20"/>
+            <circle cx="33" cy="31" r="2.3" fill="#3a2a20"/>
+            <circle cx="23.8" cy="30.3" r=".7" fill="#fff"/>
+            <circle cx="33.8" cy="30.3" r=".7" fill="#fff"/>
+            <ellipse cx="28" cy="33.6" rx="1.5" ry="1" fill="#ff8aa0"/>
+            <path d="M28 34.5 q-2 2 -4 .6 M28 34.5 q2 2 4 .6" stroke="#3a2a20" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <path d="M15 29 h-7 M15 32.5 h-6 M41 29 h7 M41 32.5 h6" stroke="#e3b489" stroke-width="1"/>
+            <line x1="41" y1="45" x2="59" y2="19" stroke="#9c6b3f" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M59 19 q3 11 -2 20" stroke="#bcd6e8" stroke-width="1" fill="none"/>
+          </svg>
+          <span class="bubble" id="buddySay">…</span>
+        </div>
       </div>
 
       <button class="act-btn" id="actBtn">🎣 抛竿</button>
@@ -480,9 +508,9 @@
     const COIN_BY_RANK = [1, 2, 5, 15, 50];       // 各稀有度的收益
     const ROD_COST = [0, 0, 60, 180, 450, 1100];  // 升到 Lv.2~5 的花费
     const SCENES = [
-      { name: '清晨鱼塘', emoji: '🌊', top: '#cdeafe', bot: '#5fb0e8', wave: 'rgba(255,255,255,.25)' },
-      { name: '海边日落', emoji: '🌅', top: '#ffd9a0', bot: '#ff7e9d', wave: 'rgba(255,255,255,.32)' },
-      { name: '加班夜塘', emoji: '🌙', top: '#2b3a67', bot: '#0f1c3f', wave: 'rgba(130,170,255,.28)' }
+      { name: '清晨鱼塘', emoji: '🌊', top: '#d4ecff', mid: '#8fc8f0', bot: '#3f93d6', wave: 'rgba(255,255,255,.3)', sun: 'rgba(255,255,210,.55)', ray: 'rgba(255,255,255,.05)' },
+      { name: '海边日落', emoji: '🌅', top: '#ffe1a8', mid: '#ff9d86', bot: '#e85a8c', wave: 'rgba(255,255,255,.34)', sun: 'rgba(255,230,170,.7)', ray: 'rgba(255,210,150,.06)' },
+      { name: '加班夜塘', emoji: '🌙', top: '#33446f', mid: '#1c2c54', bot: '#0c1530', wave: 'rgba(140,180,255,.3)', sun: 'rgba(190,210,255,.45)', ray: 'rgba(150,180,255,.05)' }
     ];
     const LEVELS = [
       [0, '摸鱼新手'], [3, '摸鱼学徒'], [8, '摸鱼能手'], [15, '摸鱼大师'], [30, '带薪摸鱼之王'], [60, '鱼塘承包商']
@@ -531,17 +559,61 @@
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
+    const FISH_COLORS = [
+      { l: '#ff9d54', d: '#f06d1f', f: '#ffd9b0' }, // 锦鲤橙
+      { l: '#ffd23f', d: '#f5a200', f: '#fff0b8' }, // 金鱼黄
+      { l: '#7ec8ff', d: '#2f8fe0', f: '#cdeeff' }, // 蓝
+      { l: '#b39dff', d: '#7c5cf0', f: '#e4dbff' }, // 紫
+      { l: '#ff8fb0', d: '#ef5f8a', f: '#ffd6e2' }  // 粉
+    ];
+    const bubbles = [];
     function initSwimmers() {
       swimmers.length = 0;
-      const fishEmojis = ['🐟', '🐠', '🐡', '🦐'];
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         swimmers.push({
-          x: Math.random() * W, y: 55 + Math.random() * (H - 80),
-          sp: 0.25 + Math.random() * 0.5, dir: Math.random() < .5 ? 1 : -1,
-          e: fishEmojis[Math.floor(Math.random() * fishEmojis.length)],
-          size: 22 + Math.random() * 12, ph: Math.random() * 6.28
+          x: Math.random() * W, y: 64 + Math.random() * (H - 92),
+          sp: 0.22 + Math.random() * 0.5, dir: Math.random() < .5 ? 1 : -1,
+          col: FISH_COLORS[i % FISH_COLORS.length],
+          size: 26 + Math.random() * 16, ph: Math.random() * 6.28
         });
       }
+      bubbles.length = 0;
+      for (let i = 0; i < 9; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: 1.5 + Math.random() * 3, sp: 0.25 + Math.random() * 0.5 });
+    }
+
+    // 矢量小鱼
+    function drawFish(x, y, size, dir, col, alpha) {
+      ctx.save();
+      ctx.translate(x, y); ctx.scale(dir, 1); ctx.globalAlpha = alpha;
+      // 阴影
+      ctx.fillStyle = 'rgba(0,0,0,.06)';
+      ctx.beginPath(); ctx.ellipse(0, size * 0.5, size * 0.5, size * 0.12, 0, 0, 6.29); ctx.fill();
+      const bg = ctx.createLinearGradient(0, -size * 0.4, 0, size * 0.4);
+      bg.addColorStop(0, col.l); bg.addColorStop(1, col.d);
+      // 尾巴
+      ctx.fillStyle = col.d;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.45, 0);
+      ctx.quadraticCurveTo(-size * 0.85, -size * 0.34, -size * 0.92, -size * 0.42);
+      ctx.quadraticCurveTo(-size * 0.66, 0, -size * 0.92, size * 0.42);
+      ctx.quadraticCurveTo(-size * 0.85, size * 0.34, -size * 0.45, 0);
+      ctx.fill();
+      // 上鳍
+      ctx.fillStyle = col.f;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.1, -size * 0.28);
+      ctx.quadraticCurveTo(size * 0.12, -size * 0.56, size * 0.26, -size * 0.26);
+      ctx.closePath(); ctx.fill();
+      // 身体
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.ellipse(0, 0, size * 0.55, size * 0.33, 0, 0, 6.29); ctx.fill();
+      // 腮纹
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = Math.max(1, size * 0.04);
+      ctx.beginPath(); ctx.arc(size * 0.1, 0, size * 0.28, -0.9, 0.9); ctx.stroke();
+      // 眼睛
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(size * 0.33, -size * 0.05, size * 0.1, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#23314d'; ctx.beginPath(); ctx.arc(size * 0.355, -size * 0.05, size * 0.05, 0, 6.29); ctx.fill();
+      ctx.restore();
     }
 
     // 游戏状态
@@ -549,49 +621,84 @@
     let bobX = 0, bobBase = 0, bobDip = 0;
     let biteTimer = null, escapeTimer = null, t = 0, running = false;
 
+    function drawLily(x, y, r, flower) {
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.beginPath(); ctx.ellipse(0, r * 0.28, r, r * 0.4, 0, 0, 6.29); ctx.fill();
+      const lg = ctx.createLinearGradient(0, -r, 0, r);
+      lg.addColorStop(0, '#7ed68a'); lg.addColorStop(1, '#3fae5a');
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.66, 0, 0.45, 6.29); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.66, 0, 0, 0.45); ctx.lineTo(0, 0); ctx.closePath(); ctx.fillStyle = '#5bc06f'; ctx.fill();
+      if (flower) {
+        ctx.fillStyle = '#ffd6e6';
+        for (let a = 0; a < 6; a++) { ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * 0.3 - r * 0.35, Math.sin(a) * r * 0.3 - r * 0.2, r * 0.22, r * 0.12, a, 0, 6.29); ctx.fill(); }
+        ctx.fillStyle = '#ffea9e'; ctx.beginPath(); ctx.arc(-r * 0.35, -r * 0.2, r * 0.14, 0, 6.29); ctx.fill();
+      }
+      ctx.restore();
+    }
+
     function draw() {
       t += 0.03;
       const sc = SCENES[scene] || SCENES[0];
-      // 水
+      // 水体渐变
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, sc.top); g.addColorStop(1, sc.bot);
+      g.addColorStop(0, sc.top); g.addColorStop(0.5, sc.mid || sc.top); g.addColorStop(1, sc.bot);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      // 波光
+      // 顶部光晕（太阳/月亮）
+      const sun = ctx.createRadialGradient(W * 0.78, 18, 4, W * 0.78, 18, 120);
+      sun.addColorStop(0, sc.sun); sun.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H);
+      // 光束
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = sc.ray;
+      for (let i = 0; i < 3; i++) {
+        const bx = W * (0.25 + i * 0.28) + Math.sin(t * 0.3 + i) * 8;
+        ctx.beginPath(); ctx.moveTo(bx, -10); ctx.lineTo(bx + 26, -10); ctx.lineTo(bx + 70, H); ctx.lineTo(bx + 4, H); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      // 水面波光
       ctx.strokeStyle = sc.wave; ctx.lineWidth = 2;
       for (let k = 0; k < 3; k++) {
         ctx.beginPath();
-        const yy = 30 + k * 55;
-        for (let x = 0; x <= W; x += 8) ctx.lineTo(x, yy + Math.sin(x * 0.05 + t + k) * 4);
+        const yy = 22 + k * 16;
+        for (let x = 0; x <= W; x += 8) ctx.lineTo(x, yy + Math.sin(x * 0.05 + t + k) * 3);
         ctx.stroke();
       }
-      // 游鱼
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // 气泡
+      ctx.fillStyle = 'rgba(255,255,255,.4)';
+      for (const b of bubbles) {
+        b.y -= b.sp; if (b.y < -4) { b.y = H + 4; b.x = Math.random() * W; }
+        ctx.beginPath(); ctx.arc(b.x + Math.sin(b.y * 0.05) * 4, b.y, b.r, 0, 6.29); ctx.fill();
+      }
+      // 游鱼（矢量）
       for (const f of swimmers) {
         f.x += f.sp * f.dir;
-        if (f.x > W + 30) f.x = -30; if (f.x < -30) f.x = W + 30;
+        if (f.x > W + 40) f.x = -40; if (f.x < -40) f.x = W + 40;
         const yy = f.y + Math.sin(t + f.ph) * 5;
-        ctx.save(); ctx.translate(f.x, yy); ctx.globalAlpha = .85;
-        if (f.dir < 0) ctx.scale(-1, 1);
-        ctx.font = f.size + 'px serif'; ctx.fillText(f.e, 0, 0);
-        ctx.restore();
+        drawFish(f.x, yy, f.size, f.dir, f.col, 0.92);
       }
       ctx.globalAlpha = 1;
+      // 睡莲（水面装饰）
+      drawLily(W * 0.16, 16, 26, true);
+      drawLily(W * 0.62, 12, 20, false);
       // 浮漂 + 鱼线
       if (state === 'waiting' || state === 'bite') {
-        bobBase = 46 + Math.sin(t * 1.5) * 3;
+        bobBase = 40 + Math.sin(t * 1.5) * 3;
         const by = bobBase + bobDip;
-        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(bobX, 0); ctx.lineTo(bobX, by); ctx.stroke();
-        // 浮漂
-        ctx.beginPath(); ctx.arc(bobX, by, 8, 0, 6.29);
-        ctx.fillStyle = state === 'bite' ? '#ff375f' : '#ff453a'; ctx.fill();
-        ctx.beginPath(); ctx.arc(bobX, by - 2, 8, Math.PI, 6.29); ctx.fillStyle = '#fff'; ctx.fill();
-        // 涟漪
+        // 浮漂（带高光）
+        ctx.fillStyle = state === 'bite' ? '#ff375f' : '#ff453a';
+        ctx.beginPath(); ctx.arc(bobX, by, 8, 0, 6.29); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bobX, by - 2.5, 8, Math.PI, 6.29); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(bobX - 2.5, by - 3, 1.8, 0, 6.29); ctx.fill();
+        // 咬钩涟漪
         if (state === 'bite') {
           const r = (t * 30) % 26;
           ctx.strokeStyle = `rgba(255,255,255,${1 - r / 26})`; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.arc(bobX, by + 6, r + 4, 0, 6.29); ctx.stroke();
-          ctx.font = '20px serif'; ctx.fillText('❗', bobX, by - 26);
+          ctx.fillStyle = '#ffd23f'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('!', bobX, by - 22);
         }
       }
       if (running) requestAnimationFrame(draw);
@@ -637,9 +744,10 @@
     function reelIn() {
       const c = pickCatch();
       recordCatch(c);
-      // 弹出动画（稀有更大 + 金光）
-      catchPop.style.fontSize = (c.rank >= 4 ? 84 : c.rank >= 3 ? 70 : 58) + 'px';
-      catchPop.textContent = c.e; catchPop.classList.remove('show'); void catchPop.offsetWidth; catchPop.classList.add('show');
+      // 稀有度奖章 + 金光
+      catchPop.textContent = c.e;
+      catchPop.className = 'catch-pop' + (c.rank >= 4 ? ' r4' : c.rank >= 3 ? ' r3' : '');
+      void catchPop.offsetWidth; catchPop.classList.add('show');
       if (c.rank >= 3) { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); confetti(); }
       if (navigator.vibrate) navigator.vibrate(c.rank >= 3 ? [40, 50, 40, 50, 60] : [30, 40, 30]);
       catchBanner.style.background = c.c;
