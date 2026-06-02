@@ -151,3 +151,15 @@ class AcceptanceRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     submission = relationship("Submission", back_populates="acceptance")
+
+
+class TalentReport(Base):
+    """天赋探测仪报告（匿名，免登录）。输入与 AI 结果存同一行，便于按 id 分享。"""
+    __tablename__ = "talent_reports"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nickname = Column(String(100))  # 可选昵称，用于结果卡片
+    inputs = Column(JSON, default=dict)  # {childhood_skills: [...], reflections: {...}}
+    result = Column(JSON, default=dict)  # AI 解析后的结构化结果
+    raw = Column(Text)  # AI 原始返回，排错用
+    created_at = Column(DateTime, default=datetime.utcnow)
