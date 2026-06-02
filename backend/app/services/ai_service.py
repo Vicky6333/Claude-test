@@ -3,10 +3,18 @@ import os
 import re
 from openai import OpenAI
 
-client = OpenAI(
-    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-    base_url="https://api.deepseek.com",
-)
+_client = None
+
+
+def _get_client() -> OpenAI:
+    """延迟创建 OpenAI 客户端。缺少 API key 时抛错，由调用方走降级兜底。"""
+    global _client
+    if _client is None:
+        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("DEEPSEEK_API_KEY 未配置")
+        _client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    return _client
 
 MODEL = "deepseek-chat"
 
@@ -47,7 +55,7 @@ SYSTEM_PROMPT = """你是一位零售商品传播领域的专业顾问，擅长�
 
 
 def _call(system: str, user: str, max_tokens: int = 2000) -> str:
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model=MODEL,
         max_tokens=max_tokens,
         messages=[
