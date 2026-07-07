@@ -151,3 +151,30 @@ class AcceptanceRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     submission = relationship("Submission", back_populates="acceptance")
+
+
+class TranslationTask(Base):
+    __tablename__ = "translation_tasks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    original_file_path = Column(Text, nullable=False)
+    translated_file_path = Column(Text)
+    status = Column(String(20), default="pending")  # pending, processing, completed, failed, stopped
+    progress = Column(Integer, default=0)  # 0-100
+    current_step = Column(String(100))  # 当前进行的步骤
+    total_steps = Column(Integer, default=0)
+    completed_steps = Column(Integer, default=0)
+    source_language = Column(String(50))
+    target_language = Column(String(50), default="zh")  # 中文
+    file_size = Column(Integer)  # 字节
+    error_message = Column(Text)
+    metadata = Column(JSON)  # 存储额外信息如章节数等
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    process_id = Column(String(100))  # 用于停止任务
+
+    creator = relationship("User", foreign_keys=[created_by])
