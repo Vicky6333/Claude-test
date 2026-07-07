@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { authApi } from '../api/auth'
 import {
-  LayoutDashboard, Package, FileText, CheckSquare, LogOut, Menu, X, Check, Edit2,
+  LayoutDashboard, Package, FileText, CheckSquare, LogOut, Menu, X, Check, Edit2, BookOpen,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -12,6 +12,7 @@ const NAV = [
   { to: '/materials', icon: Package, label: '物料中心', sub: 'M2' },
   { to: '/topics', icon: FileText, label: '选题工作台', sub: 'M3' },
   { to: '/submissions', icon: CheckSquare, label: '验收复盘', sub: 'M4' },
+  { to: '/translations', icon: BookOpen, label: '外文翻译', sub: 'M5' },
 ]
 
 function UserPanel({ user, updateUser }) {

@@ -256,3 +256,22 @@ class ProjectStats(BaseModel):
     total_cost: float
     avg_cpm: Optional[float]
     city_stats: List[dict]
+
+
+# ── Translation ───────────────────────────────────────────────────────────────
+
+class TranslationTaskSchema(BaseModel):
+    id: UUID
+    original_filename: str
+    status: str
+    progress: int
+    current_step: Optional[str]
+    file_size: int
+    source_language: Optional[str]
+    error_message: Optional[str]
+    created_at: datetime
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True

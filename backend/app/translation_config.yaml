@@ -1,0 +1,30 @@
+language:
+  source: auto
+  target: zh
+
+llm:
+  provider: openai  # OpenAI API (兼容DeepSeek)
+  model:
+    strong: deepseek-chat
+    cheap: deepseek-chat
+    fast: deepseek-chat
+  api_base: https://api.deepseek.com/v1
+  timeout: 60
+  max_retries: 3
+
+pipeline:
+  review: true
+  autofix_severe: true
+  polish: false
+  backtranslate_sample: 0.1
+  consistency_qa: true
+  book_understanding: true
+  rolling_context_segments: 3
+
+segment:
+  max_chars_per_batch: 2000
+  max_chars_per_segment: 10000
+
+output:
+  format: epub
+  preserve_original_layout: true
